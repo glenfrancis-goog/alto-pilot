@@ -1,0 +1,102 @@
+{
+  "name": "HR Policy Agent — held-out generalization set (INSTRUCTOR)",
+  "description": "Revealed at the end of Lab 2. Same skills as policy_eval.json, different facts and phrasings, so a hardcoded prompt scores poorly while a genuinely grounded agent generalizes. Do NOT distribute to learners before the reveal.",
+  "rubric": {
+    "scale": [0, 1, 2],
+    "dimensions": {
+      "correctness": { "weight": 3, "desc": "Required facts are present and correct (all parts of the question)." },
+      "grounding":   { "weight": 3, "desc": "Every claim is supported by the retrieved policy text; nothing invented." },
+      "reasoning":   { "weight": 3, "desc": "Catches the gotcha or shows the required calculation." },
+      "abstention":  { "weight": 2, "desc": "Answers when the handbook covers it; refuses when it doesn't." },
+      "citation":    { "weight": 1, "desc": "Ends with a Sources section citing the correct policy/section." }
+    },
+    "gates": {
+      "grounding_zero_caps_case_at": 0.40,
+      "badge_min_on_hard_cases": 0.80,
+      "hard_cases": ["ho_cash_tip_gotcha", "ho_tuition_reimbursement_absent"]
+    }
+  },
+  "cases": [
+    {
+      "id": "ho_hospitalization_and_notice",
+      "smoke": false,
+      "query": "If I'm admitted to hospital, how many paid hospitalization leave days do I get per year, and how much advance notice must I give my manager on a day I wake up too sick to work?",
+      "expect_refusal": false,
+      "expected_substrings": ["46", "hour"],
+      "dimensions": ["correctness", "grounding", "citation"],
+      "expected_sources": ["1.1", "19.3", "19.4"],
+      "ground_truth_notes": "Up to 46 work days of paid hospitalization leave per year (separate from the 14 outpatient days). You must notify your manager at least one hour before your normal start time."
+    },
+    {
+      "id": "ho_vacation_senior_carryover",
+      "smoke": false,
+      "query": "I've been at Altostrat for 12 years. How many vacation days do I earn a year, and if I don't use them all can I roll them over or get paid out?",
+      "expect_refusal": false,
+      "expected_substrings": ["22", "forfeit"],
+      "dimensions": ["correctness", "grounding", "reasoning", "citation"],
+      "expected_sources": ["1.2", "20.2", "20.3"],
+      "ground_truth_notes": "11+ years of service => 22 vacation days/year. Unused days carry over for exactly one additional year and must be used by Dec 31 of the following year or they are forfeited. Altostrat does NOT pay out unused vacation."
+    },
+    {
+      "id": "ho_bereavement_amount_and_deadline",
+      "smoke": false,
+      "query": "My grandmother passed away recently. How much paid bereavement leave can I take per event, and is there a deadline for using it?",
+      "expect_refusal": false,
+      "expected_substrings": ["20", "12 months"],
+      "dimensions": ["correctness", "grounding", "citation"],
+      "expected_sources": ["3.1", "22.2"],
+      "ground_truth_notes": "Up to 4 weeks (20 work days for a standard 5-day schedule) of paid bereavement leave per event, and it must be taken within 12 months of the death."
+    },
+    {
+      "id": "ho_carers_leave_lifetime",
+      "smoke": false,
+      "query": "My father has a serious long-term illness. How much paid carer's leave can I take to care for him, and what's the smallest block I can take at once?",
+      "expect_refusal": false,
+      "expected_substrings": ["8", "half"],
+      "dimensions": ["correctness", "grounding", "citation"],
+      "expected_sources": ["3.2", "23.2"],
+      "ground_truth_notes": "Up to 8 weeks of paid carer's leave per loved one, per lifetime; the minimum duration is half a work day."
+    },
+    {
+      "id": "ho_meal_cap_and_window",
+      "smoke": false,
+      "query": "I spent US$150 on dinner on a work trip. Will the whole amount be reimbursed, and how many days do I have to submit the claim?",
+      "expect_refusal": false,
+      "expected_substrings": ["120", "30"],
+      "dimensions": ["correctness", "grounding", "reasoning", "citation"],
+      "expected_sources": ["4.4", "4.2"],
+      "ground_truth_notes": "Individual meals are capped at US$120 per employee per day, so a $150 dinner exceeds the cap (not fully reimbursed). Travel expenses must be submitted via Concur within 30 days of the transaction/travel end date."
+    },
+    {
+      "id": "ho_cash_tip_gotcha",
+      "smoke": false,
+      "query": "I'd like to give a $40 cash tip to a non-government client's assistant as a thank-you. That's well under $50, so no approval needed, right?",
+      "expect_refusal": false,
+      "expected_substrings": ["cash", "prohibit"],
+      "dimensions": ["correctness", "grounding", "reasoning", "citation"],
+      "expected_sources": ["5.2", "14.2", "14.4"],
+      "gotcha": "A value under a limit doesn't make a prohibited category (cash / cash equivalents) allowed.",
+      "ground_truth_notes": "Cash and cash equivalents (gift cards, certificates) are prohibited as business courtesies regardless of value. The $40 amount and the approval thresholds are irrelevant. Correct conclusion: not allowed (prohibited category)."
+    },
+    {
+      "id": "ho_gift_approval_tier",
+      "smoke": false,
+      "query": "I want to give a non-government client a gift worth about US$600. Do I need anyone's approval, and if so whose?",
+      "expect_refusal": false,
+      "expected_substrings": ["VP"],
+      "dimensions": ["correctness", "grounding", "reasoning", "citation"],
+      "expected_sources": ["5.2", "14.2", "14.4"],
+      "ground_truth_notes": "For non-government recipients, over US$500 per person requires written pre-approval from the employee's VP. (Tiers: <100 none; 100-250 Manager; 250-500 Director; >500 VP.) A permitted gift category is assumed here."
+    },
+    {
+      "id": "ho_tuition_reimbursement_absent",
+      "smoke": false,
+      "query": "What is Altostrat's tuition reimbursement policy for employees pursuing a part-time master's degree?",
+      "expect_refusal": true,
+      "expected_substrings": [],
+      "dimensions": ["abstention", "grounding"],
+      "expected_sources": [],
+      "ground_truth_notes": "The handbook has no tuition-reimbursement / education-assistance policy. The agent should say it has no policy on file for this, rather than inventing an amount or process."
+    }
+  ]
+}

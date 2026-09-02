@@ -1,0 +1,27 @@
+# Environment & Secrets
+.env
+*.env
+*.pem
+*.key
+application_default_credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Jetski internal files
+.system_generated/
+*.metadata.json
