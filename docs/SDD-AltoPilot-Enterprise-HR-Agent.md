@@ -6,7 +6,7 @@
 * **Status:** PROPOSED / REVIEW READY
 * **Target Audience:** Engineering Leads, Cloud Architects, Chief Information Officer (CIO), Chief People Officer (CPO)
 * **Date:** September 2, 2026
-* **Version:** 1.0.0
+* **Version:** 1.1.0 (Updated to incorporate Gemini Enterprise App as Primary Employee Channel)
 * **Repository:** `https://github.com/glenfrancis-goog/alto-pilot`
 * **Target Environment:** Google Cloud Platform (Argolis Project: `projectelevatelabs`, Org: `glenfrancis.altostrat.com`)
 
@@ -16,35 +16,44 @@
 
 Enterprise organizations operate under complex, fragmented, and legally binding labor regulations across multiple jurisdictions. In APAC alone, statutory employment baselines (such as Singapore’s Ministry of Manpower mandates, Hong Kong Employment Ordinances, and Australian Fair Work regulations) define mandatory floors for paid sick leave, annual leave accrual, and government-paid parental benefits. Existing employee self-service portals suffer from high ticket resolution latencies, rigid form hierarchies, and a lack of conversational intelligence. Conversely, unconstrained Large Language Model (LLM) chatbots present severe enterprise risks: non-deterministic hallucinations of statutory benefits, lack of cryptographic non-repudiation, and absence of transactional state integration.
 
-**AltoPilot** is an autonomous, enterprise-grade HR and benefits agentic platform designed to resolve these limitations. Built on the **Gemini Enterprise Agent Platform (GEAP)** and **Agent Development Kit (ADK)**, AltoPilot moves beyond informational Q&A into fully auditable, transactional execution. AltoPilot introduces:
-1. **A Multi-Agent Mesh Architecture:** Decoupling user coordination, semantic policy retrieval, HRIS transactional mutations, and high-liability escalations.
-2. **Tri-Modal Identity & Delegation:** Combining user OIDC authentication, cryptographic agent SPIFFE IDs, and Workload Identity Federation (WIF) for zero-trust per-tool authorization.
-3. **Code-Guarded RAG & Statutory Floor Enforcement:** An algorithmic assertion layer guaranteeing that company policy answers strictly uphold or exceed statutory legal baselines without LLM drift.
-4. **Two-Phase Commit (2PC) Transactions:** Interactive Agent-to-User Interface (A2UI) confirmation cards ensuring explicit human consent before mutating external HRIS state.
-5. **Immutable BigQuery Audit Ledger:** Scrubbed, distributed OpenTelemetry (OTel) telemetry ensuring full regulatory compliance and continuous evaluation.
+**AltoPilot** is an autonomous, enterprise-grade HR and benefits agentic platform designed to resolve these limitations. Built on the **Gemini Enterprise Agent Platform (GEAP)** and **Agent Development Kit (ADK)**, AltoPilot moves beyond informational Q&A into fully auditable, transactional execution. 
+
+### Key Architectural Innovation: Dual-Channel Frontend Strategy
+AltoPilot implements a **Dual-Channel Frontend Architecture**:
+1. **Primary Employee Channel (Gemini Enterprise App):** Serves as the zero-friction, primary front door for all employees. AltoPilot is published into the corporate Gemini Enterprise app gallery, enabling employees to query policies and manage leave directly within their daily Google Workspace environment (Web, Google Chat, and Mobile) using native enterprise Single Sign-On (SSO).
+2. **Secondary Embeddable Channel (A2UI / Cloud Run Web Runtime):** Exposes a lightweight FastAPI endpoint supporting Agent-to-User Interface (A2UI) streaming and Agent-to-Agent (A2A) protocol for embedding AltoPilot into legacy corporate intranets or ServiceNow portals.
+
+Under the hood, AltoPilot provides:
+* **A Multi-Agent Mesh Architecture:** Decoupling user coordination, semantic policy retrieval, HRIS transactional mutations, and high-liability escalations.
+* **Tri-Modal Identity & Delegation:** Combining user OIDC authentication, cryptographic agent SPIFFE IDs, and Workload Identity Federation (WIF) for zero-trust per-tool authorization.
+* **Code-Guarded RAG & Statutory Floor Enforcement:** An algorithmic assertion layer guaranteeing that company policy answers strictly uphold or exceed statutory legal baselines without LLM drift.
+* **Two-Phase Commit (2PC) Transactions:** Structured confirmation cards ensuring explicit human consent before mutating external HRIS state.
+* **Immutable BigQuery Audit Ledger:** Scrubbed, distributed OpenTelemetry (OTel) telemetry ensuring full regulatory compliance and continuous evaluation.
 
 ---
 
 ## 2. Context & Background
 
 AltoPilot originated as an experimental proof-of-concept under the Google Cloud Elevate Labs program, cataloging 155 specialized HR policy concepts across leave accruals, healthcare allowances, remote work taxation, and compassionate leave. While the initial prototype demonstrated 100% retrieval accuracy on held-out evaluation datasets using Gemini 2.5 Pro, field deployment scoping identified critical production gaps:
+* **Adoption Friction:** Requiring employees to navigate to a separate standalone web URL leads to low engagement and high IT portal fatigue.
 * **Read-Only Bottleneck:** Employees could ask about leave entitlements but could not seamlessly book them.
 * **Confused Deputy Risk:** API integrations used shared service accounts, preventing non-repudiation between human intent and automated tool execution.
 * **Liability in Gray Areas:** High-consequence requests (such as uncertified medical leave adjacent to public holidays or cross-border remote work exceeding tax residency thresholds) were answered textually without deterministic governance.
 
-This design document formalizes the production architecture required to transform AltoPilot into an enterprise-ready system operated by a cross-functional engineering team of five engineers.
+This design document formalizes the production architecture required to transform AltoPilot into an enterprise-ready system operated by a cross-functional engineering team of five engineers, leveraging the Gemini Enterprise App as the core employee engagement interface.
 
 ---
 
 ## 3. Goals & Non-Goals
 
 ### 3.1. Goals
-* **G1: Multi-Agent Specialization:** Implement a modular agent mesh separating conversational routing, policy comprehension, and API mutation.
-* **G2: Zero-Trust Identity:** Enforce cryptographic agent identity (SPIFFE) and On-Behalf-Of (OBO) token exchange across all external tools.
-* **G3: Algorithmic Compliance Assurance:** Provide 100% deterministic enforcement of regional statutory floors (e.g. Singapore MOM statutory leave floors) via pre-delivery validation hooks.
-* **G4: Transactional Integrity:** Support idempotent, human-confirmed transactions against WorkWeek (HRIS/Payroll) and ServiceImmediately (Service Management).
-* **G5: Regulatory Non-Repudiation:** Stream sanitized, immutable execution traces and tool logs to BigQuery with 7-year statutory retention.
-* **G6: Developer Quality Flywheel:** Enforce CI/CD quality and security gates via CodeMender and automated synthetic regression evals.
+* **G1: Turnkey Employee Access via Gemini Enterprise App:** Seamlessly register and surface AltoPilot in the corporate Gemini Enterprise app catalog via `agents-cli publish gemini-enterprise`, supporting `@AltoPilot` invocations across Web, Google Chat, and Mobile.
+* **G2: Multi-Agent Specialization:** Implement a modular agent mesh separating conversational routing, policy comprehension, and API mutation.
+* **G3: Zero-Trust Identity:** Enforce cryptographic agent identity (SPIFFE) and On-Behalf-Of (OBO) token exchange across all external tools.
+* **G4: Algorithmic Compliance Assurance:** Provide 100% deterministic enforcement of regional statutory floors (e.g. Singapore MOM statutory leave floors) via pre-delivery validation hooks.
+* **G5: Transactional Integrity:** Support idempotent, human-confirmed transactions against WorkWeek (HRIS/Payroll) and ServiceImmediately (Service Management).
+* **G6: Regulatory Non-Repudiation:** Stream sanitized, immutable execution traces and tool logs to BigQuery with 7-year statutory retention.
+* **G7: Developer Quality Flywheel:** Enforce CI/CD quality and security gates via CodeMender and automated synthetic regression evals.
 
 ### 3.2. Non-Goals
 * **NG1:** Direct integration with raw bank clearing rails for payroll disbursement (handled exclusively within core HRIS batch cycles).
@@ -55,19 +64,18 @@ This design document formalizes the production architecture required to transfor
 
 ## 4. High-Level System Architecture
 
-AltoPilot employs a layered, microservice-inspired multi-agent architecture orchestrated via the **Agent Gateway** on Google Cloud.
+AltoPilot employs a dual-channel frontend architecture orchestrated via the **Agent Gateway** on Google Cloud.
 
 ```
-                                  ┌────────────────────────────────────────┐
-                                  │      EMPLOYEE / HR ADMINISTRATOR       │
-                                  └───────────────────┬────────────────────┘
-                                                      │ HTTPS / OIDC (ID-1)
-                                                      ▼
-                                  ┌────────────────────────────────────────┐
-                                  │       A2UI / WEB RUNTIME (FastAPI)     │
-                                  └───────────────────┬────────────────────┘
-                                                      │ mTLS / PSC
-                                                      ▼
+┌───────────────────────────────────────────────────────────┐      ┌────────────────────────────────────────┐
+│             PRIMARY CHANNEL: GEMINI ENTERPRISE APP        │      │    SECONDARY CHANNEL: EMBEDDED A2UI    │
+│  - Web Workspace (gemini.google.com)                      │      │  - Corporate Intranet Webhook / Portal │
+│  - Google Chat @AltoPilot bot & Mobile Apps               │      │  - ServiceNow / Custom Portal Iframe   │
+│  - Native Google Workspace OIDC Identity (ID-1)           │      │  - Headless FastAPI on Cloud Run       │
+└─────────────────────────────┬─────────────────────────────┘      └───────────────────┬────────────────────┘
+                              │                                                        │
+                              │ Native :streamQuery RPC                                │ HTTPS / mTLS
+                              ▼                                                        ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                       AGENT GATEWAY (ENVOY DATA PLANE)                                 │
 │  - Identity & Token Exchange (ID-1 ➔ ID-3)    - Model Armor (Prompt Injection / PII Filtering)          │
@@ -79,7 +87,7 @@ AltoPilot employs a layered, microservice-inspired multi-agent architecture orch
 │      COORDINATOR AGENT       │       │    POLICY SUBAGENT (OKF)     │       │    HRIS SUBAGENT (A2A)   │
 │  - Gemini 2.5 Pro (Global)   │◄─────►│  - 155 Policy Concept Index  │◄─────►│  - FastMCP Connector     │
 │  - Intent Decomposition      │       │  - Vector Embeddings Engine  │       │  - WorkWeek API Client   │
-│  - A2UI Payload Generation   │       │  - Deterministic Floor Check │       │  - Two-Phase Commit      │
+│  - Structured Card Synthesis │       │  - Deterministic Floor Check │       │  - Two-Phase Commit      │
 └──────────────┬───────────────┘       └──────────────────────────────┘       └─────────────┬────────────┘
                │                                                                            │
                │                                                                            ▼
@@ -98,7 +106,7 @@ AltoPilot employs a layered, microservice-inspired multi-agent architecture orch
 ```
 
 ### 4.1. Core Components
-1. **A2UI Web Runtime:** A responsive client and lightweight API gateway providing interactive confirmation widgets, dynamic Markdown rendering, and real-time reasoning telemetry inspection.
+1. **Gemini Enterprise App (Primary Front Door):** The managed enterprise conversational interface where employees interact with AltoPilot. Handles authentication, conversation state, mobile responsiveness, and Google Chat integration.
 2. **Agent Gateway:** An Envoy-based managed proxy enforcing ingress/egress policies, Common Expression Language (CEL) authorization, and SPIFFE identity propagation.
 3. **Coordinator Agent:** The central orchestration engine responsible for intent classification, session state management, and multi-agent synthesis.
 4. **Policy Specialist Subagent:** Executes dense vector and lexical search across the 155 OKF policy concepts, enforcing jurisdictional statutory floors before emitting answers.
@@ -113,39 +121,68 @@ AltoPilot employs a layered, microservice-inspired multi-agent architecture orch
 To prevent confused-deputy attacks and ensure cryptographic non-repudiation, AltoPilot implements a tri-modal identity scheme:
 
 ```
-Human Employee (ID-1)       A2UI / Client           Agent Gateway            Coordinator Agent        WorkWeek MCP Server
-       │                          │                       │                           │                       │
-       │── 1. Login (OAuth/OIDC) ─►│                       │                           │                       │
-       │                          │── 2. Request + ID-1 ─►│                           │                       │
-       │                          │                       │── 3. Mint SPIFFE (ID-2) ─►│                       │
-       │                          │                       │                           │── 4. Call Tool ──────►│
-       │                          │                       │◄── 5. Exchange Token ─────│   (OBO Delegation)    │
-       │                          │                       │    (WIF: ID-1 + ID-2 ➔ ID-3)                      │
-       │                          │                       │──────────────────────────────────────────────────►│
-       │                          │                       │   6. Execute Query with Scoped Token (ID-3)       │
+Employee (ID-1)         Gemini Enterprise App         Agent Gateway            Coordinator Agent        WorkWeek MCP Server
+       │                          │                         │                           │                       │
+       │── 1. Logged into GE ────►│                         │                           │                       │
+       │   ("@AltoPilot query")   │── 2. :streamQuery ─────►│                           │                       │
+       │                          │      (OIDC Claims)      │── 3. Mint SPIFFE (ID-2) ─►│                       │
+       │                          │                         │                           │── 4. Call Tool ──────►│
+       │                          │                         │◄── 5. Exchange Token ─────│   (OBO Delegation)    │
+       │                          │                         │    (WIF: ID-1 + ID-2 ➔ ID-3)                      │
+       │                          │                         │──────────────────────────────────────────────────►│
+       │                          │                         │   6. Execute Query with Scoped Token (ID-3)       │
 ```
 
-1. **User Identity ($ID_1$):** Human principal authenticated via enterprise OIDC identity provider (IdP).
-2. **Agent Identity ($ID_2$):** Workload identity represented by a SPIFFE ID (`spiffe://altostrat.internal/ns/hr/sa/altopilot-coordinator`) embedded in mTLS X.509 certs.
+1. **User Identity ($ID_1$):** Human principal authenticated via enterprise Google Workspace OIDC identity. The Gemini Enterprise app propagates verified claims (`email`, `user_id`, `org_unit`) in the invocation context.
+2. **Agent Identity ($ID_2$):** Workload identity represented by a SPIFFE ID (`spiffe://altostrat.internal/ns/hr/sa/altopilot-coordinator`) embedded in mTLS certificates.
 3. **Delegated Identity ($ID_3$):** Short-lived Downscoped Access Token minted via Workload Identity Federation (WIF) reflecting both the human principal and the agent ID. Third-party target systems log both identities in their internal audit records.
 
-### 5.2. Two-Phase Commit (2PC) Transactional Lifecycle
-All mutating operations (such as leave bookings or benefits claims) follow an explicit two-phase commit protocol:
+### 5.2. Registration & Publishing Lifecycle (GE App Integration)
+AltoPilot is registered with the enterprise catalog using `agents-cli`:
+
+```bash
+# 1. Deploy ADK Agent to Vertex AI Agent Runtime
+agents-cli deploy --target agent-runtime --project mba-codemender
+
+# 2. Register with Gemini Enterprise App
+agents-cli publish gemini-enterprise \
+  --registration-type adk \
+  --agent-runtime-id "projects/799659834628/locations/us-central1/reasoningEngines/altopilot-prod" \
+  --gemini-enterprise-app-id "projects/799659834628/locations/global/collections/default_collection/engines/enterprise-hr" \
+  --display-name "AltoPilot HR Assistant" \
+  --description "Autonomous HR policy guidance, Singapore MOM statutory compliance, and leave bookings." \
+  --tool-description "Answers employee policy queries, checks leave balances in WorkWeek, and submits leave requests."
+```
+
+* **Administrative Governance Gate:** Once registered, AltoPilot enters the Gemini Enterprise Admin Console in `PENDING_APPROVAL` status. An authorized Google Workspace / Cloud Administrator reviews the tool scopes, policies, and target models before publishing it enterprise-wide.
+
+### 5.3. Two-Phase Commit (2PC) in Gemini Enterprise Chat
+Within the Gemini Enterprise conversational interface:
 
 ```
 [Phase 1: Preparation & Draft Synthesis]
-User Intent ➔ Coordinator validates with Policy Subagent ➔ Queries HRIS for Balance Check
-➔ Emits Immutable Action Payload (Draft REQ-ID) ➔ Renders Interactive A2UI Confirmation Card
+User: "@AltoPilot I had a baby yesterday, can you submit 4 days paternity leave starting Monday?"
+➔ Coordinator queries Policy Subagent ➔ Validates MOM statutory compliance
+➔ Queries WorkWeek for Balance Check (20 days available)
+➔ Emits Structured Markdown Draft Card:
+   ┌─────────────────────────────────────────────────────────────┐
+   │ 📋 LEAVE SUBMISSION DRAFT: Paternity Leave (GPPL)            │
+   │ • Dates: Monday, 08 Sep 2026 - Thursday, 11 Sep 2026 (4 Days)│
+   │ • Current Balance: 20 Days | Balance After: 16 Days         │
+   │ • Statutory Floor: Compliant with MOM Singapore 4-week rule │
+   │ Reply "Confirm" to book in WorkWeek, or "Cancel" to abort.  │
+   └─────────────────────────────────────────────────────────────┘
 
 [Phase 2: Human Execution Gate & Commit]
-User clicks "Approve & Submit" ➔ Cryptographic signature sent to Agent Gateway
+User replies: "Confirm"
+➔ AltoPilot verifies cryptographic session context
 ➔ High-liability threshold check:
-    ├─ If Low Risk (Standard Leave <= 5 days): Directly commit to WorkWeek API ➔ Return Confirmation Ticket
-    └─ If High Risk (Leave > 14 days, Uncertified Sick Leave, Cross-Border Remote Work):
-       ➔ Freeze Action ➔ Open ServiceImmediately Approval Task ➔ Route to HRBP for Dual Sign-off
+    ├─ Standard Leave (<= 5 days): Commits transaction to WorkWeek API ➔ Emits confirmation receipt
+    └─ Extended / High-Risk (> 14 days, uncertified sick leave, cross-border):
+       ➔ Opens ServiceImmediately Ticket #INC-94821 ➔ Routes to HRBP for co-approval
 ```
 
-### 5.3. Code-Guarded RAG & Statutory Floor Enforcement
+### 5.4. Code-Guarded RAG & Statutory Floor Enforcement
 LLMs must never be permitted to unilaterally calculate statutory minimums. AltoPilot separates semantic retrieval from mathematical policy validation:
 
 ```python
@@ -229,7 +266,7 @@ Before any agent prompt, OKF policy update, or tool connector is promoted to sta
 | **System Architect / Tech Lead** | Glen Francis | Overall system architecture, GEAP Agent Gateway topology, SPIFFE identity configuration, and cross-team alignment. | SDD approval, Agent Gateway configuration, core orchestration engine. |
 | **Integrations Engineer** | Engineer 2 | Build and maintain FastMCP tool servers for WorkWeek (HRIS) and ServiceImmediately (Ticketing). | `tools/workweek_mcp.py`, `tools/service_immediately_mcp.py`, mock test servers. |
 | **Policy & Compliance Engineer** | Engineer 3 | Indexing of 155 OKF policy concepts, deterministic statutory floor assertion engine, and legal rule ontology. | `knowledge/` vectors, `rag/floor_validator.py`, APAC legal compliance matrix. |
-| **DevSecOps Engineer** | Engineer 4 | Containerization, Cloud Run deployment manifests, Secret Manager integration, CodeMender CI/CD guardrail. | `Dockerfile`, `.github/workflows/ci.yml`, Semgrep rulepacks, Terraform configs. |
+| **DevSecOps Engineer** | Engineer 4 | Gemini Enterprise App registration, Agent Runtime deployment, Secret Manager integration, CodeMender CI/CD guardrail. | `deployment_metadata.json`, `agents-cli publish` automation, `.github/workflows/ci.yml`. |
 | **QA & Evaluation Engineer** | Engineer 5 | Design 50+ synthetic user scenarios, red-teaming prompt injection suites, automated regression benchmark runners. | `evals/synthetic_suite.json`, `evals/policy_eval.py`, BigQuery quality dashboards. |
 
 ---
@@ -238,27 +275,28 @@ Before any agent prompt, OKF policy update, or tool connector is promoted to sta
 
 | Architectural Decision | Chosen Option | Alternative Considered | Trade-Off Rationale |
 | :--- | :--- | :--- | :--- |
+| **Frontend Strategy** | **Gemini Enterprise App as Primary Front Door** | Custom Bespoke Web Portal Only | Building a custom web portal incurs high frontend maintenance, requires dedicated auth plumbing, and introduces high user friction. Gemini Enterprise provides native Google Workspace SSO, mobile/chat access, and turnkey corporate reach. |
 | **Mesh vs Monolith** | **Multi-Agent Mesh on GEAP** | Single ReAct Monolithic Agent | A single monolith suffers from prompt bloat, high token costs, and catastrophic tool hallucinations when handling 20+ tool schemas simultaneously. The mesh isolates domains cleanly. |
 | **Identity Delegation** | **Tri-Modal SPIFFE + WIF** | Central Service Account with Context Headers | Service account headers are trivial to spoof if any upstream gateway is compromised and fail enterprise non-repudiation audit standards. |
 | **Compliance Gating** | **Code-Guarded Deterministic Hook** | Dual-Pass LLM Judge | A secondary LLM judge is still probabilistic, introduces 400ms additional latency, and can still hallucinate complex statutory conditions. Code assertions provide mathematical guarantees. |
-| **Mutating Writes** | **Two-Phase Commit (A2UI)** | Immediate Execution with Undo | Immediate execution creates high operational overhead for HR teams to reverse unauthorized or accidental payroll/leave actions. Explicit confirmation eliminates accidental mutations. |
+| **Mutating Writes** | **Two-Phase Commit (Draft ➔ Confirm)** | Immediate Execution with Undo | Immediate execution creates high operational overhead for HR teams to reverse unauthorized or accidental payroll/leave actions. Explicit confirmation eliminates accidental mutations. |
 
 ---
 
 ## 10. Rollout, Milestones & Launch Criteria
 
 ```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│   MILESTONE 1   │       │   MILESTONE 2   │       │   MILESTONE 3   │       │   MILESTONE 4   │
-│ Core Mesh & 2PC │ ────► │ Floor Assertions│ ────► │ Security Gating │ ────► │ Pilot Launch    │
-│ Weeks 1 - 2     │       │ Weeks 3 - 4     │       │ Weeks 5 - 6     │       │ Weeks 7 - 8     │
-└─────────────────┘       └─────────────────┘       └─────────────────┘       └─────────────────┘
+┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+│   MILESTONE 1    │       │   MILESTONE 2    │       │   MILESTONE 3    │       │   MILESTONE 4    │
+│ Mesh & FastMCP   │ ────► │ Floor Assertions │ ────► │ GE App Publish   │ ────► │ Enterprise Pilot │
+│ Weeks 1 - 2      │       │ Weeks 3 - 4      │       │ Weeks 5 - 6      │       │ Weeks 7 - 8      │
+└──────────────────┘       └──────────────────┘       └──────────────────┘       └──────────────────┘
 ```
 
 * **Milestone 1 (Weeks 1-2):** Deploy Coordinator Agent and FastMCP connectors for WorkWeek and ServiceImmediately in sandbox.
 * **Milestone 2 (Weeks 3-4):** Integrate 155 OKF concepts with deterministic statutory floor validation hooks for Singapore and Hong Kong.
-* **Milestone 3 (Weeks 5-6):** Implement Agent Gateway with Model Armor, SPIFFE identity exchange, and BigQuery audit ledger streaming.
-* **Milestone 4 (Weeks 7-8):** Run 100-user internal pilot with Altostrat APAC Strategic Advisory teams; verify zero compliance drift and sub-500ms median latency.
+* **Milestone 3 (Weeks 5-6):** Implement Agent Gateway with Model Armor, SPIFFE identity exchange, and register AltoPilot with Gemini Enterprise App via `agents-cli publish`.
+* **Milestone 4 (Weeks 7-8):** Run 100-user internal pilot across Altostrat APAC Strategic Advisory teams via Google Chat and Gemini Enterprise web app; verify zero compliance drift and sub-500ms median latency.
 
 ---
 
