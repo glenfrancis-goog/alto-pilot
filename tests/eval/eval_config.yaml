@@ -1,0 +1,118 @@
+# Evaluation Configuration for HR Policy Agent (Google Agents CLI Format)
+# Conforms to https://github.com/google/agents-cli and Agent Platform Evaluation SDK
+
+# Tiered Model Grading Strategy (Cost & Time Efficiency Optimization)
+eval_judge_model: "gemini-2.5-flash"
+reasoning_judge_model: "gemini-2.5-pro"
+
+judge_tier_routing:
+  factual_dimensions:
+    model: "gemini-2.5-flash"
+    dimensions: ["correctness", "grounding", "citation"]
+    description: "Lightweight, rapid judge model for deterministic and factual verification at minimal token cost."
+    temperature: 0.0
+  reasoning_dimensions:
+    model: "gemini-2.5-pro"
+    dimensions: ["reasoning", "gotchas", "abstention", "multi_hop_saga_branching"]
+    description: "High-parameter reasoning judge for deep policy conflict resolution, trap detection, and SAGA rollbacks."
+    temperature: 0.0
+
+# Metrics to execute during evaluation runs
+metrics_to_run:
+  - hallucination               # Built-in: checks for fabricated or ungrounded statements
+  - grounding                   # Built-in: verifies claims against retrieved handbook context
+  - final_response_quality      # Built-in: measures clarity, completeness, and instruction-following
+  - safety                      # Built-in: evaluates safety policies, toxicity, and content boundaries
+  - hr_policy_rubric_eval       # Custom LLM judge: scores 5-dimension rubric (Correctness, Grounding, Reasoning, Abstention, Citation)
+  - hr_policy_citation_integrity # Custom Python: verifies presence of explicit Sources / Section citations
+
+# Custom metric definition pool
+custom_metrics:
+  # 5-Dimension Comprehensive Rubric Evaluator
+  - name: hr_policy_rubric_eval
+    description: >
+      Strict LLM-as-judge evaluation against the 5-dimension HR Policy rubric from RUBRICS.md.
+      Applies harsh grounding checks, enforces gotcha-trap detection, and enforces the Grounding Gate.
+    prompt_template: |
+      You are a STRICT evaluator of an HR Policy Agent answering employee questions regarding the
+      Altostrat Singapore Employee Policy Handbook. You are a harsh grounding checker, not a helpful assistant.
+      The agent must stay grounded in the RETRIEVED EVIDENCE, cite specific sections, and REFUSE when the
+      evidence does not cover the question.
+
+      USER QUERY:
+      {prompt}
+
+      AGENT FINAL RESPONSE:
+      {response}
+
+      AGENT CONVERSATION TRACE & RETRIEVED EVIDENCE:
+      {agent_data}
+
+      SCORING RUBRIC (Score each applicable dimension 0, 1, or 2):
+      1. Correctness (Weight: 3):
+         - 2: Every required fact is present and correct, and every sub-question is answered.
+         - 1: One required part is correct but another is missing or wrong.
+         - 0: A key required fact is wrong or absent.
+
+      2. Grounding (Weight: 3):
+         - 2: Every substantive claim is supported by retrieved evidence (or correct refusal with no claims).
+         - 1: Mostly grounded, but one minor claim or embellishment is unsupported.
+         - 0: Material fact is fabricated or comes from ungrounded outside knowledge.
+
+      3. Reasoning / Gotchas (Weight: 3):
+         - 2: Names governing rule/prohibition and applies it, catches gotcha traps, or shows correct math.
+         - 1: Reaches right conclusion but key reasoning is implicit or partially shown.
+         - 0: Falls for the trap, applies wrong rule, or calculates incorrectly.
+
+      4. Abstention (Weight: 2):
+         - 2: Answers when covered; clearly refuses out-of-domain (e.g. coding) or ungrounded questions.
+         - 1: Right instinct but hedges or speculates unnecessarily.
+         - 0: Answers an ungrounded/out-of-domain question, or refuses covered policy.
+
+      5. Citation (Weight: 1):
+         - 2: Ends with clear Sources / Section reference citing an approved handbook section.
+         - 1: Citation present but generic, vague, or incorrect section.
+         - 0: No citation or fabricated section.
+
+      GROUNDING GATE:
+      If Grounding is scored 0, the maximum total score cannot exceed 0.40.
+
+      Return STRICT JSON:
+      {
+        "correctness": <0|1|2>,
+        "grounding": <0|1|2>,
+        "reasoning": <0|1|2>,
+        "abstention": <0|1|2>,
+        "citation": <0|1|2>,
+        "score": <normalized_score_0.0_to_1.0>,
+        "explanation": "<concise justification highlighting strengths and gaps>"
+      }
+
+  # Deterministic Citation Format Checker
+  - name: hr_policy_citation_integrity
+    description: Deterministic code metric verifying that grounded answers include valid Sources or Section citations.
+    custom_function: |
+      def evaluate(instance):
+          # Extract final text response
+          response_text = ""
+          response_obj = instance.get("response") or {}
+          if isinstance(response_obj, dict):
+              parts = response_obj.get("parts", [])
+              if parts and isinstance(parts, list):
+                  response_text = parts[0].get("text", "")
+          elif isinstance(response_obj, str):
+              response_text = response_obj
+          
+          text_lower = response_text.lower()
+          
+          # Refusal cases do not require policy citations
+          refusal_markers = ["cannot", "not in the handbook", "no policy on file", "decline", "out of domain", "unable to assist"]
+          if any(m in text_lower for m in refusal_markers):
+              return {"score": 1.0, "explanation": "Valid refusal detected; citation not required."}
+          
+          # Policy responses must cite specific section or source
+          has_source = "source" in text_lower or "section " in text_lower or "sec. " in text_lower
+          if has_source:
+              return {"score": 1.0, "explanation": "Valid source citation detected in response."}
+          else:
+              return {"score": 0.0, "explanation": "Missing required policy source citation (Sources: Section ...)."}

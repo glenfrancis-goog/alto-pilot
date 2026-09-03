@@ -1,0 +1,265 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "ho_hospitalization_and_notice",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "If I'm admitted to hospital, how many paid hospitalization leave days do I get per year, and how much advance notice must I give my manager on a day I wake up too sick to work?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Up to 46 work days of paid hospitalization leave per year (separate from the 14 outpatient days). You must notify your manager at least one hour before your normal start time.\n\nSources: 1.1, 19.3, 19.4"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "1.1",
+        "19.3",
+        "19.4"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "Up to 46 work days of paid hospitalization leave per year (separate from the 14 outpatient days). You must notify your manager at least one hour before your normal start time."
+    },
+    {
+      "eval_case_id": "ho_vacation_senior_carryover",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "I've been at Altostrat for 12 years. How many vacation days do I earn a year, and if I don't use them all can I roll them over or get paid out?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "11+ years of service => 22 vacation days/year. Unused days carry over for exactly one additional year and must be used by Dec 31 of the following year or they are forfeited. Altostrat does NOT pay out unused vacation.\n\nSources: 1.2, 20.2, 20.3"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "1.2",
+        "20.2",
+        "20.3"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "reasoning",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "11+ years of service => 22 vacation days/year. Unused days carry over for exactly one additional year and must be used by Dec 31 of the following year or they are forfeited. Altostrat does NOT pay out unused vacation."
+    },
+    {
+      "eval_case_id": "ho_bereavement_amount_and_deadline",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "My grandmother passed away recently. How much paid bereavement leave can I take per event, and is there a deadline for using it?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Up to 4 weeks (20 work days for a standard 5-day schedule) of paid bereavement leave per event, and it must be taken within 12 months of the death.\n\nSources: 3.1, 22.2"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "3.1",
+        "22.2"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "Up to 4 weeks (20 work days for a standard 5-day schedule) of paid bereavement leave per event, and it must be taken within 12 months of the death."
+    },
+    {
+      "eval_case_id": "ho_carers_leave_lifetime",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "My father has a serious long-term illness. How much paid carer's leave can I take to care for him, and what's the smallest block I can take at once?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Up to 8 weeks of paid carer's leave per loved one, per lifetime; the minimum duration is half a work day.\n\nSources: 3.2, 23.2"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "3.2",
+        "23.2"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "Up to 8 weeks of paid carer's leave per loved one, per lifetime; the minimum duration is half a work day."
+    },
+    {
+      "eval_case_id": "ho_meal_cap_and_window",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "I spent US50 on dinner on a work trip. Will the whole amount be reimbursed, and how many days do I have to submit the claim?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Individual meals are capped at US20 per employee per day, so a 50 dinner exceeds the cap (not fully reimbursed). Travel expenses must be submitted via Concur within 30 days of the transaction/travel end date.\n\nSources: 4.4, 4.2"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "4.4",
+        "4.2"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "reasoning",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "Individual meals are capped at US20 per employee per day, so a 50 dinner exceeds the cap (not fully reimbursed). Travel expenses must be submitted via Concur within 30 days of the transaction/travel end date."
+    },
+    {
+      "eval_case_id": "ho_cash_tip_gotcha",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "I'd like to give a 0 cash tip to a non-government client's assistant as a thank-you. That's well under 0, so no approval needed, right?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Cash and cash equivalents (gift cards, certificates) are prohibited as business courtesies regardless of value. The 0 amount and the approval thresholds are irrelevant. Correct conclusion: not allowed (prohibited category).\n\nSources: 5.2, 14.2, 14.4"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "5.2",
+        "14.2",
+        "14.4"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "reasoning",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "Cash and cash equivalents (gift cards, certificates) are prohibited as business courtesies regardless of value. The 0 amount and the approval thresholds are irrelevant. Correct conclusion: not allowed (prohibited category).",
+      "gotcha": "A value under a limit doesn't make a prohibited category (cash / cash equivalents) allowed."
+    },
+    {
+      "eval_case_id": "ho_gift_approval_tier",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "I want to give a non-government client a gift worth about US00. Do I need anyone's approval, and if so whose?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "For non-government recipients, over US00 per person requires written pre-approval from the employee's VP. (Tiers: <100 none; 100-250 Manager; 250-500 Director; >500 VP.) A permitted gift category is assumed here.\n\nSources: 5.2, 14.2, 14.4"
+            }
+          ]
+        }
+      },
+      "expected_sources": [
+        "5.2",
+        "14.2",
+        "14.4"
+      ],
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "reasoning",
+        "citation"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "For non-government recipients, over US00 per person requires written pre-approval from the employee's VP. (Tiers: <100 none; 100-250 Manager; 250-500 Director; >500 VP.) A permitted gift category is assumed here."
+    },
+    {
+      "eval_case_id": "ho_tuition_reimbursement_absent",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What is Altostrat's tuition reimbursement policy for employees pursuing a part-time master's degree?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "The handbook has no tuition-reimbursement / education-assistance policy. The agent should say it has no policy on file for this, rather than inventing an amount or process."
+            }
+          ]
+        }
+      },
+      "expected_sources": [],
+      "dimensions": [
+        "abstention",
+        "grounding"
+      ],
+      "smoke": false,
+      "ground_truth_notes": "The handbook has no tuition-reimbursement / education-assistance policy. The agent should say it has no policy on file for this, rather than inventing an amount or process."
+    }
+  ]
+}

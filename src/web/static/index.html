@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altostrat Enterprise HR Assistant (MVP 1)</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">🏢</div>
+        <h2>Altostrat HR</h2>
+      </div>
+      <div class="employee-card">
+        <div class="avatar">SE</div>
+        <div class="employee-meta">
+          <div class="emp-name">Sunivy Employee</div>
+          <div class="emp-id">EMP-62 • Solutions Architect</div>
+        </div>
+      </div>
+      <div class="quick-links">
+        <h3>Sample Prompts</h3>
+        <button class="prompt-chip" onclick="sendQuickPrompt('What is the sick leave and MC notice policy?')">📋 Sick Leave & MC Policy</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I want to buy a $45 gift card for my cousin who hosted me. Is that allowed?')">⚠️ $45 Host Gift Card (Gotcha)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('Submit a vacation leave request for Sep 3 to Sep 4 (2 days)')">🏖️ Submit Vacation (Pre-flight)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I am eligible for a home office monitor. Can you verify my remote status and order one?')">💻 Order 27\" Monitor (SAGA UC-2.1)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I need to take short-term medical leave next week. Set it up.')">🏥 Medical Leave (SAGA UC-2.2)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I am transferring to London office next month. Sort my relocation.')">✈️ London Transfer (SAGA UC-2.3)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('Withdraw my consent and purge my personal data.')">🛡️ GDPR RTBF Purge (UC-PRIVACY-01)</button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="badge">Model: Gemini 3.7 Flash</div>
+        <div class="badge">SLA: Eventarc &lt; 3m P95</div>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-main">
+      <header class="chat-header">
+        <div class="header-status">
+          <span class="status-indicator"></span>
+          <h1>Enterprise HR Virtual Assistant</h1>
+        </div>
+        <div class="header-tags">
+          <span class="tag">Zero-Password IAP</span>
+          <span class="tag">Model Armor ~250ms</span>
+          <span class="tag">AlloyDB 6432</span>
+        </div>
+      </header>
+
+      <div class="messages-container" id="messagesContainer">
+        <!-- Welcome Message -->
+        <div class="message assistant">
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-body">
+            <p>Hello Sunivy! I am your <strong>Enterprise HR Assistant</strong>. I can assist you with verified HR policies from the Altostrat Singapore Handbook, manage your WorkWeek leave balances, and coordinate IT or facilities requests across enterprise backends.</p>
+            <div class="citation-pills">
+              <span class="citation-pill">📄 Altostrat_SG_Handbook_2026.pdf</span>
+              <span class="citation-pill">🔒 Cloud DLP InfoType Masking Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Card Slot -->
+      <div id="cardSlot" class="card-slot"></div>
+
+      <!-- Input Bar -->
+      <div class="input-bar-wrapper">
+        <form class="input-form" id="chatForm" onsubmit="handleFormSubmit(event)">
+          <input type="text" id="userInput" placeholder="Ask about policies, submit leave, or request services..." autocomplete="off">
+          <button type="submit" id="sendBtn" class="send-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </form>
+        <div class="input-disclaimer">
+          All conversations are monitored by Google Cloud Model Armor and de-identified via Cloud Sensitive Data Protection (DLP).
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

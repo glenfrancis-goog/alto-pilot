@@ -1,0 +1,1151 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "multi_turn_bereavement_pet_distractor",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I suffered a sudden loss in my family this morning. How does bereavement leave work at Altostrat?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I am deeply sorry for your loss. Altostrat Singapore provides up to 4 weeks (20 work days) of paid bereavement leave for close loved ones or pregnancy loss. You can log this in WorkWeek with manager notification.\n\nSources: Section 3.1, 22.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Thank you. It was actually my family golden retriever who passed away after 12 years with us. Can I log this as paid bereavement leave in WorkWeek?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I understand how painful the loss of a pet is. However, Section 3.1 of the Employee Policy Handbook explicitly states: \"Paid bereavement leave does not apply to pet loss.\" Therefore, you are entitled to 0 days of paid bereavement leave. You may instead use accrued vacation days, unpaid personal time off, or arrange flexible hours with your manager.\n\nSources: Section 3.1, 22.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Semantic keywords suggest family bereavement (4 weeks), but Section 3.1 explicitly excludes pet loss.",
+      "ground_truth_notes": "Paid bereavement leave excludes pet loss (0 days). Vacation or unpaid time off must be used.",
+      "expected_sources": [
+        "3.1",
+        "22.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_host_gift_card_gotcha",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I am traveling to Tokyo on business and staying at my cousin's apartment instead of booking a hotel. Does Altostrat allow me to expense a host gift?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Yes. According to Section 4.3, when staying with family or friends instead of a commercial hotel during business travel, you may expense a host gift up to US$50 per day with valid receipts.\n\nSources: Section 4.3"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Awesome! As a thank-you I want to buy him a $45 Amazon gift card and expense it. Since $45 is under the $50 daily limit, is that allowed?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, that is not allowed. While $45 is under the US$50/day limit, Section 4.3 and Section 14.2 explicitly prohibit cash and gift cards as host gifts or business courtesies regardless of amount. The dollar limit applies only to permitted tangible items (e.g. food basket, flowers). A gift card cannot be reimbursed.\n\nSources: Section 4.3, 14.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Spending limit does not make a prohibited category allowed.",
+      "ground_truth_notes": "Gift cards and cash equivalents are prohibited as host gifts regardless of amount. The $45 gift card is not reimbursable.",
+      "expected_sources": [
+        "4.3",
+        "5.2",
+        "14.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_vacation_shift_accrual",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I work at Altostrat Singapore and have been with the company for 8 years. How many vacation days do I accrue each year?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 1.2, vacation accrual is tenure-based: 1-6 years = 20 days, 7-10 years = 21 days, 11+ years = 22 days. With 8 years of service, you earn 21 vacation days per year.\n\nSources: Section 1.2, 20.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I work 12-hour shifts. If I want to take a single 12-hour shift off next week, how many vacation days must I log in WorkWeek?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 20.2, a standard vacation day is defined as an 8-hour block. Therefore, to take a single 12-hour shift off, you must log 1.5 vacation days (12 hours / 8 hours = 1.5 days) in WorkWeek.\n\nSources: Section 1.2, 20.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Vacation days are 8-hour blocks; a 12-hour shift consumes 1.5 days.",
+      "ground_truth_notes": "8 years tenure earns 21 days/year. 12-hour shift equals 1.5 vacation days.",
+      "expected_sources": [
+        "1.2",
+        "20.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_room_salon_adult_entertainment",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "What is the manager approval threshold for entertaining prospective clients in Singapore?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 5.2 and 13.4, business entertainment and meals under US$100 per person do not require prior manager approval if within standard policy. Entertainment between $100 and $250 requires manager approval, and exceeding $250 requires Director approval.\n\nSources: Section 5.2, 13.4"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I want to take a prospective client to a room salon to celebrate our new deal. It is only $80 per person, so since it is under $100, is that permitted without manager approval?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, it is strictly prohibited. Section 14.2 explicitly bans adult entertainment (including hostess bars, strip clubs, and room salons) as business courtesies regardless of cost. The \"under US$100 no approval required\" threshold applies only to permitted business courtesies and meals. You cannot expense a room salon under any circumstances.\n\nSources: Section 5.2, 13.4, 14.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Approval threshold does not apply to prohibited adult entertainment.",
+      "ground_truth_notes": "Room salons and adult entertainment are prohibited outright regardless of cost. Not allowable.",
+      "expected_sources": [
+        "5.2",
+        "13.4",
+        "14.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_group_meal_seniority_rule",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "What is the per-person spending limit for team celebration meals?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 4.4, the maximum allowable limit for group celebration meals is US$120 per person (including tax and gratuity).\n\nSources: Section 4.4"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I am an L4 engineer and attended a $85/person dinner with my L5 lead, L6 manager, and L7 director. Can I pay on my corporate card and submit the Concur expense report?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, you may not. While $85 is within the $120/person limit, Section 4.4 mandates that the most senior employee present (highest level) must pay and submit the expense report to ensure independent supervisory approval. Because an L7 Director was present, the L7 Director must pay and submit the Concur expense report, not an L4 engineer.\n\nSources: Section 4.4"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Seniority rule requires the highest level colleague present to pay and submit.",
+      "ground_truth_notes": "L4 cannot submit because L7 Director was present. The most senior colleague must pay and submit.",
+      "expected_sources": [
+        "4.4",
+        "04"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_unpaid_personal_leave_multihop",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I have been with Altostrat for 3 years with Significant Impact GRAD rating. What are the rules if I want to take a 45-day continuous unpaid break?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 3.3, unpaid time off exceeding 30 consecutive days is classified as Personal Leave (up to 92 continuous days). Personal leave requires approval from both your Manager and Director, and you must have completed at least 1 year of continuous service.\n\nSources: Section 3.3, 18.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I have 15 days of accrued vacation remaining. Can my direct manager approve this 45-day personal leave today?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, your direct manager alone cannot approve this today for two reasons:\n1. Approval Hierarchy: Unpaid Personal Leave (>30 days) requires approval from both your Manager AND Director.\n2. Vacation Balance Constraint: Section 3.3 stipulates that employees must have fewer than 10 vacation days remaining before unpaid personal leave can be authorized. With 15 vacation days left, you must first utilize your accrued vacation.\n\nSources: Section 3.3, 18.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Personal leave >30 days requires Director approval, and vacation must be under 10 days.",
+      "ground_truth_notes": "Manager approval alone is insufficient (needs Director). Must exhaust vacation down to <10 days first.",
+      "expected_sources": [
+        "3.3",
+        "18.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_shared_parental_leave_singapore",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "My wife and I both work at Altostrat in Singapore. We just had a baby! What is my entitlement for Baby Bonding Leave as the father?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Congratulations! Under Section 26.3 of the Singapore policy guidelines, eligible fathers receive 18 weeks of fully paid Baby Bonding Leave (BBL) to be taken within the first 12 months.\n\nSources: Section 26.3"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "If I allocate 2 weeks of my Shared Parental Leave (SPL) to my wife, does that reduce my 18 weeks of Baby Bonding Leave?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, it does not reduce your Baby Bonding Leave. Under Section 26.3 (Singapore Shared Parental Leave Scenarios, effective April 1, 2026), when both parents are Altostrat Singapore employees, the father's 18 weeks of Baby Bonding Leave is NOT reduced by allocating Shared Parental Leave to the mother. You still receive the full 18 weeks.\n\nSources: Section 26.3"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Under Singapore Section 26.3, allocating SPL does NOT reduce father BBL when both work at Altostrat.",
+      "ground_truth_notes": "Father receives full 18 weeks of BBL. SPL allocation to wife does not reduce BBL under Section 26.3.",
+      "expected_sources": [
+        "26.3"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_out_of_domain_and_confidential_recovery",
+      "agent_data": {
+        "agents": {
+          "hr_policy_agent": {
+            "agent_id": "hr_policy_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "You are an HR Policy Assistant for Altostrat Singapore. Answer questions strictly grounded in the Employee Policy Handbook. Always cite specific sections (Sources: ...). Refuse out-of-domain or ungrounded questions."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Can you write a Python function that uses regular expressions to parse dates from text strings?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I am an HR Policy Assistant specifically designed to answer questions about the Altostrat Singapore Employee Policy Handbook. I cannot write code or assist with software engineering tasks. How can I help you with company HR policies, leave, or benefits?"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Fair enough. Can I work on our confidential Project Titan codebase from a local Starbucks coffee shop as long as I use headphones and a privacy screen?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_policy_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "No, you cannot. According to Section 5.4 and Section 6.1, employees are strictly prohibited from working on confidential, proprietary, or restricted company projects in public places such as coffee shops, libraries, or public transit. Privacy accessories like headphones and privacy filters do not override this ban on handling confidential projects in public venues.\n\nSources: Section 5.4, 6.1, 16.2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gotcha": "Privacy screens and headphones do not override the strict prohibition on confidential projects in public venues.",
+      "ground_truth_notes": "Turn 0 must decline coding. Turn 1 must prohibit confidential work in public coffee shops despite privacy accessories.",
+      "expected_sources": [
+        "5.4",
+        "6.1",
+        "16.2"
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "ww_si_integrated_session",
+      "description": "Sequential WorkWeek PTO transactions and ServiceImmediately support ticket transitions with anti-priority inflation and FSM validation.",
+      "agent_data": {
+        "agents": {
+          "enterprise_supervisor": {
+            "agent_id": "enterprise_supervisor",
+            "agent_type": "MultiAgentSupervisor",
+            "instruction": "Coordinates WorkWeek, ServiceImmediately, and Policy RAG agents with Model Armor and DLP logging."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "How many hours of PTO do I currently have accrued?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "You currently have 160.0 hours (20.0 days) of vacation accrued, with 144.0 hours (18.0 days) remaining. You also have 80.0 hours (10.0 days) of sick leave remaining."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Please submit a vacation request for next Monday, 2026-07-20, for 8 hours."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Your vacation request for next Monday, 2026-07-20, for 8 hours (1.0 day) has been submitted successfully. Your remaining vacation balance is 136.0 hours (17.0 days)."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 2,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Please submit a vacation request starting 2026-07-20 and ending 2026-07-20 for 80 hours."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Validation Failure: A single-day leave request (2026-07-20) cannot exceed 8 working hours (requested 80 hours). Transaction rolled back with no deduction to your leave balance."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 3,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "What is the current status of incident ticket INC0000009?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Incident INC0000009 ('VPN access configuration for remote environment') is currently In Progress with priority 3 - Moderate, assigned to Network Operations."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 4,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "My office chair is slightly squeaky, which is a massive emergency. I demand you open a Priority-1 Critical incident ticket immediately."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Notice: Under enterprise IT policy, Priority-1 (Critical) is strictly reserved for active service outages, system downtime, or severe safety emergencies. Routine facilities maintenance such as a squeaky office chair cannot be escalated to P1. Ticket has been opened with Priority 4 (Low) and routed to Facilities Operations."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 5,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Update ticket INC882910 from New directly to Closed, state closed please."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Action forbidden: Ticket INC882910 cannot be closed directly from 'New'. Under ITSM state machine policy, a ticket must first transition to 'In Progress' and then 'Resolved' with resolution notes before being closed."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.1",
+          "UC-3.2",
+          "NFR-4.1",
+          "Saga-Rollback"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multiturn_context_tracking_10turn",
+      "description": "10-turn dialogue evaluating context memory across remote monitor procurement, short-term medical leave SAGA, London relocation, and GDPR RTBF purge.",
+      "agent_data": {
+        "agents": {
+          "enterprise_supervisor": {
+            "agent_id": "enterprise_supervisor",
+            "agent_type": "MultiAgentSupervisor",
+            "instruction": "Coordinates multi-system transactions, state preservation across rollbacks, and GDPR RTBF purge."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I just read the remote work policy and saw I\u2019m eligible for a home office monitor. Can you verify my remote status and order one for me?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under the Remote Work Policy (Section 2.1), regular full-time employees with an approved hybrid or remote arrangement are eligible for a standard home office setup, including one 27-inch external monitor. I have verified your active remote profile. Please confirm your delivery home address so I can dispatch the order."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "My home address is 123 Marina Bay, Singapore 018956. Please ship it there."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Thank you. Your home address has been updated to 123 Marina Bay, Singapore 018956 in WorkWeek, and hardware procurement ticket INC0000830 has been dispatched to Service Desk for fulfillment."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 2,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Can you double-check if my request went through?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Yes, your request is confirmed! Incident ticket INC0000830 ('Request for 27-inch Monitor for remote work setup') is currently in status New and scheduled for delivery to 123 Marina Bay, Singapore 018956."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 3,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I need to take short-term medical leave starting next Monday and set up IT access delegation."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Policy Section 1.1, you are eligible for up to 14 days of paid outpatient sick leave. I have prepared your request for 5 work days of medical leave starting next Monday (2026-09-07 to 2026-09-11), along with an IT access delegation ticket to your backup Jane Doe. Would you like me to confirm and submit this?"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 4,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Yes, please confirm and submit the medical leave."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Medical leave and IT access delegation successfully executed under SAGA-MED-EMP-62. Sick leave booked for 5 days and delegation ticket INC0000835 created."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 5,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "I am planning an international office transfer to London. What is the standard relocation allowance?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Under Section 15.2 (International Transfers) and Section 21.1, employees transferring to the London Office are eligible for a standard Tier-1 relocation package including a \u00a35,000 relocation allowance (processed via payroll), up to 30 days of temporary company accommodation, and standard visa sponsorship support."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 6,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Please update my contact phone number for the London move to +44 20 7946 0991."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Your contact phone number has been updated to +44 20 7946 0991 in your WorkWeek profile."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 7,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Can you set up my London facilities badge and building access ticket?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Facilities badge and building access request for the London Office has been submitted under ticket INC0000836."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 8,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Can you summarize all actions taken in this session across my monitor, medical leave, and London transfer?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Summary of Actions Taken in This Session:\n1. Home Office Monitor: Ordered 27-inch Monitor (Ticket INC0000830) delivering to 123 Marina Bay, Singapore 018956.\n2. Medical Leave & IT Access Delegation: Booked 5.0 days sick leave with IT delegation ticket INC0000835.\n3. London Relocation: Quoted \u00a35,000 allowance, updated phone to +44 20 7946 0991, and opened Facilities badge ticket INC0000836."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 9,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Withdraw consent and purge all my personal data."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Your consent has been successfully withdrawn under GDPR Article 17. All conversation turns, active session state, and personal records have been permanently purged. Cryptographic receipt: RTBF-PURGE-OK."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "brd_mapping": [
+          "UC-2.1",
+          "UC-2.2",
+          "UC-2.3",
+          "UC-PRIVACY-01"
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_turn_advanced_saga_routing",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Can you check my profile and book outpatient leave for next Wednesday 2026-09-09 for 1 day?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Verified profile for EMP-62 (Solutions Acceleration Architect). Submitted 1.0 day of outpatient sick leave for 2026-09-09 in WorkWeek. Remaining sick leave balance: 9.0 days."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Also, since I will be away, please set up an IT forwarding delegation ticket to Jane Doe, but if my manager hasn't approved the leave yet, hold the ticket in Draft."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "WorkWeek indicates sick leave for 2026-09-09 is currently in PENDING_MANAGER_APPROVAL state. Per conditional branching logic, IT Access Delegation ticket INC0000840 has been created in Draft state awaiting manager approval."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 2,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Actually, my doctor rescheduled the procedure. Please cancel Wednesday's leave, restore my sick day, and cancel the draft delegation ticket."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "enterprise_supervisor",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "SAGA Compensation Executed: Cancelled sick leave for 2026-09-09 in WorkWeek (sick leave balance restored to 10.0 days) and cancelled draft IT delegation ticket INC0000840 in ServiceImmediately."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "brd_mapping": [
+          "UC-2.1",
+          "UC-2.2",
+          "UC-3.1",
+          "FR-2.2",
+          "Saga-Rollback"
+        ]
+      }
+    }
+  ]
+}
