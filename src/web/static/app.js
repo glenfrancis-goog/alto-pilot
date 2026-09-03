@@ -34,7 +34,13 @@ async function sendMessage(promptText, confirmedAction = null, userOverride = fa
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      data = { response: rawText || "Server returned non-JSON response" };
+    }
     loadingEl.remove();
 
     if (!res.ok) {
