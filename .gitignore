@@ -25,3 +25,4 @@ Thumbs.db
 # Jetski internal files
 .system_generated/
 *.metadata.json
+*.db
