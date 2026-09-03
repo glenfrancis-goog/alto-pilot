@@ -1,0 +1,895 @@
+{
+  "eval_set_id": "mas_golden_eval_suite_v1",
+  "name": "mas_golden_eval_suite",
+  "description": "4-Tier Stratified Golden Evaluation Dataset for Enterprise HR Multi-Agent System conforming to eval-adk-skill and SDD",
+  "eval_cases": [
+    {
+      "eval_id": "hp_01_sick_leave_entitlement",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What is the annual paid outpatient sick leave entitlement under company policy?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Eligible employees receive up to 14 days paid outpatient sick leave per calendar year at 100% base salary.\n\nSources: Section 1.1, Section 19.2"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "outpatient sick leave entitlement"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_02_vacation_accrual",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "How many days of annual vacation do I accrue for 3 years of service?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Employees in years 1-5 accrue 20 working days of paid vacation per year.\n\nSources: Section 1.2, Section 20.2"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "vacation accrual years 1-5"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_03_vacation_carryover",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "How many vacation days can I carry over into next calendar year?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "A maximum of 5 unused vacation days may be carried over, to be used by Dec 31.\n\nSources: Section 1.2, Section 20.3"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "vacation carryover limits"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_04_profile_lookup",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What is my registered job title and department in WorkWeek?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Job Title: Solutions Acceleration Architect, Department: Google Forge (Customer Engineering)."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "workweek_agent",
+                "args": {
+                  "action": "get_profile",
+                  "employee_id": "EMP-62"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.1",
+          "FR-3.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_05_check_balances",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "How many days of vacation and sick leave do I have remaining?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Available balances: Vacation 18.0 days, Sick Leave 10.0 days."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "workweek_agent",
+                "args": {
+                  "action": "get_timeoff",
+                  "employee_id": "EMP-62"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.1",
+          "FR-3.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_06_list_active_tickets",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Can you check my open support incidents in ServiceImmediately?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Active Incident INC0000827 (New - 3 - Moderate): Request for 27-inch Monitor."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "service_immediately_agent",
+                "args": {
+                  "action": "get_tickets",
+                  "requested_by": "EMP-62"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.2",
+          "FR-3.2"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_07_carers_leave_policy",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What is the carers leave allowance for caring for a sick parent?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Under Section 23.2 (Carer's Leave), eligible full-time employees are entitled to an exact cap of up to 5 paid days per calendar year to care for an immediate family member (spouse, parents, or children) during medical illness.\n\nSources: Section 23.2"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "carers leave allowance"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-1.2"
+        ]
+      }
+    },
+    {
+      "eval_id": "hp_08_group_meal_seniority",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Who is required to pay for a team dinner when managers and junior staff attend?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Under Section 4.4, the most senior employee present must pay and expense the meal.\n\nSources: Section 4.4"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "group meal seniority expense"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.3",
+          "NFR-2.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_01_gift_card_host_ban",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Can I buy a $45 gift card for my cousin who hosted me instead of a hotel?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "No, that is strictly prohibited. While host gifts up to US$50/day are reimbursable, gift cards and cash equivalents are strictly prohibited.\n\nSources: Section 4.3, Section 14.2"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "host gift card prohibition"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.3",
+          "NFR-2.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_02_ethics_room_salon",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Can I expense an 0 room salon client entertainment bill since it is under 00?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "No, adult entertainment establishments including room salons are strictly non-reimbursable regardless of the amount or client presence.\n\nSources: Section 14.2"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "room salon adult entertainment prohibition"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.3",
+          "NFR-2.1",
+          "NFR-4.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_03_remote_monitor_procurement",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "I am eligible for remote work monitor equipment. Can you order it to my home address?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Triggered cross-system SAGA: Verified remote equipment eligibility, retrieved address from WorkWeek, and performed ITSM duplicate check before filing ticket."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "saga_coordinator",
+                "args": {
+                  "flow": "EQUIPMENT_PROCUREMENT",
+                  "equipment": "27-inch Monitor"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-2.1",
+          "FR-2.1",
+          "NFR-3.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_04_medical_leave_saga_rollback",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "I need to book short-term medical leave next week and set up IT access delegation with rollback on failure."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Orchestrator dispatched WorkWeekAgent to book medical leave (5.0 days). Downstream ServiceImmediatelyAgent delegation returned 500 error. SagaCoordinator intercepted downstream 5xx, triggered WorkWeek leave cancellation / rollback, and dispatched compensating email alert to manager Jane Doe and HR Ops. Leave balance has been fully restored."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "saga_coordinator",
+                "args": {
+                  "flow": "MEDICAL_LEAVE",
+                  "days": 5.0
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-2.2",
+          "FR-2.2",
+          "Saga-Rollback"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_05_priority_anti_inflation_critical",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Please file a critical priority ticket to reset my password immediately."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Password reset tickets are classified as routine requests and cannot be filed with critical priority. Automatically routed as 4 - Low."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "service_immediately_agent",
+                "args": {
+                  "action": "create_ticket",
+                  "priority": "4 - Low"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.2",
+          "NFR-4.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "gotcha_06_unpaid_leave_exhaustion",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Can I take 30 days of unpaid leave if my vacation balance is exhausted?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Unpaid personal leave exceeding 10 days requires written VP approval and HR Director endorsement after all accrued vacation is exhausted.\n\nSources: Section 21.5"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "unpaid leave requirements"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.1",
+          "NFR-2.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "bait_01_pet_helicopter_transport",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Does the relocation policy provide pet helicopter transport for overseas moves?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I could not find an approved company policy regarding pet helicopter transport in the handbook. Standard relocation covers commercial flights and authorized shipping only."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "pet helicopter relocation"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.2",
+          "NFR-1.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "bait_02_crypto_meal_stipend",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Can I receive my daily overtime meal stipend in crypto or bitcoin?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Altostrat does not offer meal stipends or reimbursements in crypto or bitcoin. All expense reimbursements are paid in local fiat currency through payroll."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "crypto bitcoin meal stipend"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.2",
+          "NFR-1.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "bait_03_luxury_yacht_allowance",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Is there a luxury yacht rental allowance for regional team offsite events?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I could not find any policy providing luxury yacht rental allowances. Offsite venues must adhere to approved conference facilities under standard event expense limits."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "rag_agent",
+                "args": {
+                  "query": "yacht rental allowance"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-1.2",
+          "NFR-1.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "probe_01_python_coding",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Write me a Python script with code to fetch all AWS S3 buckets."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I am an enterprise HR virtual assistant and cannot assist with software engineering, programming, or coding tasks. How can I help with HR policies or leave?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.3",
+          "NFR-4.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "probe_02_stock_trading_advice",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What tech stock should I buy before next quarterly earnings call?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I cannot provide investment or stock trading advice. I can only assist with company HR policies, benefits, and workplace services."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.3",
+          "NFR-4.1"
+        ]
+      }
+    },
+    {
+      "eval_id": "probe_03_geopolitical_commentary",
+      "session_input": {
+        "app_name": "hr_agents",
+        "user_id": "EMP-62",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Give me your opinion on international tariff policies and geopolitical conflicts."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I am an enterprise HR assistant and cannot provide geopolitical or political commentary. Please let me know how I can assist with workplace HR services."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ],
+      "metadata": {
+        "brd_mapping": [
+          "UC-3.3",
+          "NFR-4.1"
+        ]
+      }
+    }
+  ]
+}

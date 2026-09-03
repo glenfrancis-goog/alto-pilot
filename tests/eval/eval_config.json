@@ -1,0 +1,47 @@
+{
+  "eval_judge_model": "gemini-2.5-flash",
+  "reasoning_judge_model": "gemini-2.5-pro",
+  "judge_tier_routing": {
+    "factual_dimensions": {
+      "model": "gemini-2.5-flash",
+      "dimensions": [
+        "correctness",
+        "grounding",
+        "citation"
+      ],
+      "description": "Lightweight, rapid judge model for deterministic and factual verification at minimal token cost.",
+      "temperature": 0.0
+    },
+    "reasoning_dimensions": {
+      "model": "gemini-2.5-pro",
+      "dimensions": [
+        "reasoning",
+        "gotchas",
+        "abstention",
+        "multi_hop_saga_branching"
+      ],
+      "description": "High-parameter reasoning judge for deep policy conflict resolution, trap detection, and SAGA rollbacks.",
+      "temperature": 0.0
+    }
+  },
+  "metrics_to_run": [
+    "hallucination",
+    "grounding",
+    "final_response_quality",
+    "safety",
+    "hr_policy_rubric_eval",
+    "hr_policy_citation_integrity"
+  ],
+  "custom_metrics": [
+    {
+      "name": "hr_policy_rubric_eval",
+      "description": "Strict LLM-as-judge evaluation against the 5-dimension HR Policy rubric from RUBRICS.md. Applies harsh grounding checks, enforces gotcha-trap detection, and enforces the Grounding Gate.\n",
+      "prompt_template": "You are a STRICT evaluator of an HR Policy Agent answering employee questions regarding the\nAltostrat Singapore Employee Policy Handbook. You are a harsh grounding checker, not a helpful assistant.\nThe agent must stay grounded in the RETRIEVED EVIDENCE, cite specific sections, and REFUSE when the\nevidence does not cover the question.\n\nUSER QUERY:\n{prompt}\n\nAGENT FINAL RESPONSE:\n{response}\n\nAGENT CONVERSATION TRACE & RETRIEVED EVIDENCE:\n{agent_data}\n\nSCORING RUBRIC (Score each applicable dimension 0, 1, or 2):\n1. Correctness (Weight: 3):\n   - 2: Every required fact is present and correct, and every sub-question is answered.\n   - 1: One required part is correct but another is missing or wrong.\n   - 0: A key required fact is wrong or absent.\n\n2. Grounding (Weight: 3):\n   - 2: Every substantive claim is supported by retrieved evidence (or correct refusal with no claims).\n   - 1: Mostly grounded, but one minor claim or embellishment is unsupported.\n   - 0: Material fact is fabricated or comes from ungrounded outside knowledge.\n\n3. Reasoning / Gotchas (Weight: 3):\n   - 2: Names governing rule/prohibition and applies it, catches gotcha traps, or shows correct math.\n   - 1: Reaches right conclusion but key reasoning is implicit or partially shown.\n   - 0: Falls for the trap, applies wrong rule, or calculates incorrectly.\n\n4. Abstention (Weight: 2):\n   - 2: Answers when covered; clearly refuses out-of-domain (e.g. coding) or ungrounded questions.\n   - 1: Right instinct but hedges or speculates unnecessarily.\n   - 0: Answers an ungrounded/out-of-domain question, or refuses covered policy.\n\n5. Citation (Weight: 1):\n   - 2: Ends with clear Sources / Section reference citing an approved handbook section.\n   - 1: Citation present but generic, vague, or incorrect section.\n   - 0: No citation or fabricated section.\n\nGROUNDING GATE:\nIf Grounding is scored 0, the maximum total score cannot exceed 0.40.\n\nReturn STRICT JSON:\n{\n  \"correctness\": <0|1|2>,\n  \"grounding\": <0|1|2>,\n  \"reasoning\": <0|1|2>,\n  \"abstention\": <0|1|2>,\n  \"citation\": <0|1|2>,\n  \"score\": <normalized_score_0.0_to_1.0>,\n  \"explanation\": \"<concise justification highlighting strengths and gaps>\"\n}\n"
+    },
+    {
+      "name": "hr_policy_citation_integrity",
+      "description": "Deterministic code metric verifying that grounded answers include valid Sources or Section citations.",
+      "custom_function": "def evaluate(instance):\n    # Extract final text response\n    response_text = \"\"\n    response_obj = instance.get(\"response\") or {}\n    if isinstance(response_obj, dict):\n        parts = response_obj.get(\"parts\", [])\n        if parts and isinstance(parts, list):\n            response_text = parts[0].get(\"text\", \"\")\n    elif isinstance(response_obj, str):\n        response_text = response_obj\n    \n    text_lower = response_text.lower()\n    \n    # Refusal cases do not require policy citations\n    refusal_markers = [\"cannot\", \"not in the handbook\", \"no policy on file\", \"decline\", \"out of domain\", \"unable to assist\"]\n    if any(m in text_lower for m in refusal_markers):\n        return {\"score\": 1.0, \"explanation\": \"Valid refusal detected; citation not required.\"}\n    \n    # Policy responses must cite specific section or source\n    has_source = \"source\" in text_lower or \"section \" in text_lower or \"sec. \" in text_lower\n    if has_source:\n        return {\"score\": 1.0, \"explanation\": \"Valid source citation detected in response.\"}\n    else:\n        return {\"score\": 0.0, \"explanation\": \"Missing required policy source citation (Sources: Section ...).\"}\n"
+    }
+  ]
+}
