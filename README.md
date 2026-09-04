@@ -1,5 +1,9 @@
 # JetClimbers: Enterprise HR Agentic Solution (MVP 1)
 
+<p align="center">
+  <img src="src/web/static/logo.png" alt="JetClimbers — Agentic AI Engineers" width="480">
+</p>
+
 JetClimbers is a secure, conversational AI assistant designed to provide employees with immediate self-service access to HR policies, leave management, and helpdesk operations.
 
 Built using Google's **Agent Development Kit (ADK)** and powered by **Gemini 3.8** on **Vertex AI**, JetClimbers bridges enterprise knowledge and transactional backends (WorkWeek HCM, ServiceImmediately ITSM) while enforcing zero-trust security and deterministic policy guardrails.

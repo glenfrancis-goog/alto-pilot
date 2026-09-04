@@ -1,5 +1,6 @@
 let currentSessionId = "session-" + Math.random().toString(36).substring(2, 9);
 const employeeId = "EMP-62";
+const ASSISTANT_AVATAR = '<img src="/static/logo.png" alt="JetClimbers" class="avatar-img">';
 
 async function sendMessage(promptText, confirmedAction = null, userOverride = false) {
   const container = document.getElementById("messagesContainer");
@@ -14,7 +15,7 @@ async function sendMessage(promptText, confirmedAction = null, userOverride = fa
   }
 
   // Loading skeleton
-  const loadingEl = appendMessage("assistant", "🤖", "<em>Analyzing request through Google Cloud Model Armor...</em>");
+  const loadingEl = appendMessage("assistant", ASSISTANT_AVATAR, "<em>Analyzing request through Google Cloud Model Armor...</em>");
 
   try {
     const payload = {
@@ -48,7 +49,7 @@ async function sendMessage(promptText, confirmedAction = null, userOverride = fa
       return;
     }
 
-    appendMessage("assistant", "🤖", formatMarkdown(data.response));
+    appendMessage("assistant", ASSISTANT_AVATAR, formatMarkdown(data.response));
 
     // Render Suggestion Chips if returned
     if (data.chips && Array.isArray(data.chips) && data.chips.length > 0) {
