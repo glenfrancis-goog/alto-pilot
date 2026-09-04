@@ -9,6 +9,7 @@ Verifies SDD NFR-4.1, NFR-4.2, and Error Matrix Table 5.6 under parallel multi-t
 
 import time
 import uuid
+from datetime import datetime, timezone
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -119,7 +120,7 @@ def test_duplicate_detector_concurrency():
         "category": "Hardware",
         "short_description": "Standard 27-inch external monitor request for home office",
         "status": "In Progress",
-        "created_at": "2026-09-03T10:00:00Z"
+        "created_at": datetime.now(timezone.utc).isoformat()
     }]
 
     results = []

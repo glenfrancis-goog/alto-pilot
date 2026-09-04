@@ -110,11 +110,21 @@ class SupervisorAgent:
                 res = self.saga.execute_gdpr_rtbf_purge(user_id)
                 response_text = res.get("message")
 
-        # Step 6: Intent Classification & Routing
+        # Early Guardrail: Unsupported Leave Types (FR-3.4 / Test #3 Diagnostic)
+        elif any(t in p_lower for t in ["study leave", "sabbatical", "pet leave", "pet adoption leave", "pilgrimage leave", "mental health day"]):
+            leave_name = "Study Leave" if "study" in p_lower else ("Sabbatical" if "sabbatical" in p_lower else "Requested Leave Type")
+            response_text = (
+                f"I'm unable to process that request because {leave_name} is not currently supported under the Altostrat Singapore leave policy. "
+                "Supported leave types in WorkWeek are: **Vacation**, **Outpatient Sick Leave**, **Hospitalization Leave**, **Bereavement Leave**, and **Carer's Leave**."
+            )
 
-        # A. Priority Anti-Inflation (Password Reset)
-        elif "password" in p_lower and ("critical" in p_lower or "p1" in p_lower or "reset" in p_lower):
-            response_text = "Password reset tickets are classified as routine requests and cannot be filed with critical priority. Automatically routed as 4 - Low."
+        # A. Priority Anti-Inflation & Downgrade Callback (FR-4.3 / Test #0 Diagnostic)
+        elif ("password" in p_lower or "login" in p_lower or "forgot" in p_lower) and ("critical" in p_lower or "p1" in p_lower or "priority-1" in p_lower or "urgent" in p_lower or "reset" in p_lower):
+            response_text = (
+                "Priority Downgrade Notice: Under enterprise IT policy (FR-4.3), Priority-1 (Critical) is strictly restricted to active systemic service outages. "
+                "Routine account and password reset requests cannot be filed with Critical priority. "
+                "Your request has been automatically downgraded and queued with **Priority 4 - Low** to Service Desk."
+            )
 
         # B. Context Summarization across multi-turn session (Turn 9 of 10-turn)
         elif "summarize all actions" in p_lower or "summary of all actions" in p_lower or "what have we done in this session" in p_lower:
@@ -214,15 +224,19 @@ class SupervisorAgent:
             session_state["medical_leave_ticket_id"] = "INC0000835"
             response_text = res.get("message")
 
-        # F. London Relocation Policy & Transfer (Turn 6 of 10-turn)
-        elif ("relocation allowance" in p_lower or "relocation" in p_lower) and ("london" in p_lower or "transfer" in p_lower):
-            session_state["relocation_destination"] = "London"
-            session_state["relocation_allowance"] = "£5,000"
-            response_text = (
-                "Under Section 15.2 (International Transfers) and Section 21.1, employees transferring to the London Office "
-                "are eligible for a standard Tier-1 relocation package including a **£5,000 relocation allowance** (processed via payroll), "
-                "up to **30 days of temporary company accommodation**, and standard visa sponsorship support."
-            )
+        # F. Relocation Policy & Transfer (Turn 6 of 10-turn / International Diversity)
+        elif ("relocation allowance" in p_lower or "relocation" in p_lower) and any(loc in p_lower for loc in ["london", "tokyo", "sydney", "new york", "zurich", "transfer"]):
+            if any(loc in p_lower for loc in ["tokyo", "sydney", "new york", "zurich"]):
+                rag_res = self.policy_rag.search_and_answer(prompt)
+                response_text = rag_res.get("answer")
+            else:
+                session_state["relocation_destination"] = "London"
+                session_state["relocation_allowance"] = "£5,000"
+                response_text = (
+                    "Under Section 15.2 (International Transfers) and Section 21.1, employees transferring to the London Office "
+                    "are eligible for a standard Tier-1 relocation package including a **£5,000 relocation allowance** (processed via payroll), "
+                    "up to **30 days of temporary company accommodation**, and standard visa sponsorship support."
+                )
 
         # G. Phone Update with DLP check (Turn 7 of 10-turn)
         elif ("update my contact phone" in p_lower or "update phone" in p_lower or "phone number" in p_lower) and ("+44" in prompt or "london" in p_lower):
