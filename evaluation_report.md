@@ -1,6 +1,6 @@
-# AltoPilot — Evaluation Report & Benchmark Guide
+# JetClimbers — Evaluation Report & Benchmark Guide
 
-**Target System:** AltoPilot Enterprise HR & Benefits Agent Platform  
+**Target System:** JetClimbers Enterprise HR & Benefits Agent Platform  
 **System Design Document (SDD):** [`SDD.md`](file:///usr/local/google/home/glenfrancis/alto-pilot/SDD.md) (`SDD-ALTO-2026-01`, v1.1.0)  
 **Target Directory:** [`/usr/local/google/home/glenfrancis/alto-pilot`](file:///usr/local/google/home/glenfrancis/alto-pilot)  
 **Repository:** `https://github.com/glenfrancis-goog/alto-pilot` (Branch: `main`)  
@@ -16,7 +16,7 @@
 ## 1. Evaluation Approach
 
 ### 1.1 Approach Rigor
-The evaluation approach for AltoPilot follows the **Google Agents CLI (`agents-cli`) Quality Flywheel**, implementing a rigorous, automated, and closed-loop evaluation harness. Rather than relying on non-deterministic surface metrics (such as BLEU, ROUGE, or ungrounded perplexity), the harness enforces deterministic semantic anchors, structured LLM-as-a-judge grading with zero temperature, and code-based deterministic verification.
+The evaluation approach for JetClimbers follows the **Google Agents CLI (`agents-cli`) Quality Flywheel**, implementing a rigorous, automated, and closed-loop evaluation harness. Rather than relying on non-deterministic surface metrics (such as BLEU, ROUGE, or ungrounded perplexity), the harness enforces deterministic semantic anchors, structured LLM-as-a-judge grading with zero temperature, and code-based deterministic verification.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -300,7 +300,7 @@ Based on empirical evaluation data, the following prioritized hillclimbing recom
    - Deploys seamlessly to Google Cloud Run via `gcloud run deploy enterprise-hr-agent --source .`.
 3. **Gemini Enterprise App Integration**:
    - Registered for enterprise employee channel via `agents-cli publish gemini-enterprise`.
-   - Supports native SSO and `@AltoPilot` mentions across Web, Google Chat, and Mobile.
+   - Supports native SSO and `@JetClimbers` mentions across Web, Google Chat, and Mobile.
 
 ---
 
@@ -322,4 +322,4 @@ Based on empirical evaluation data, the following prioritized hillclimbing recom
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Recommendation:** The AltoPilot Enterprise HR & Benefits Agent Platform is fully verified, hardened, and ready for automated evaluation on the Project Elevate Evaluation & Feedback Server (`https://elevate-evaluation.aishprabhat.demo.altostrat.com/`).
+**Recommendation:** The JetClimbers Enterprise HR & Benefits Agent Platform is fully verified, hardened, and ready for automated evaluation on the Project Elevate Evaluation & Feedback Server (`https://elevate-evaluation.aishprabhat.demo.altostrat.com/`).

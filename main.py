@@ -1,4 +1,4 @@
-"""Main CLI & Server Entrypoint for Altostrat Enterprise HR Agentic Solution (MVP 1).
+"""Main CLI & Server Entrypoint for JetClimbers Enterprise HR Agentic Solution (MVP 1).
 
 Strictly conforms to SDD Specifications.
 """
@@ -9,7 +9,7 @@ import uvicorn
 from src.agents.supervisor import SupervisorAgent
 
 def main():
-    parser = argparse.ArgumentParser(description="Altostrat Enterprise HR Virtual Assistant (MVP 1)")
+    parser = argparse.ArgumentParser(description="JetClimbers Enterprise HR Virtual Assistant (MVP 1)")
     parser.add_argument("query", nargs="?", default=None, help="Single-turn user prompt to run directly")
     parser.add_argument("--serve", action="store_true", help="Start the FastAPI & Web UI server")
     parser.add_argument("--host", default="0.0.0.0", help="Server host")
@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     if args.serve:
-        print(f"Starting Enterprise HR Agent Web Server on http://{args.host}:{args.port}...")
+        print(f"Starting JetClimbers Enterprise HR Agent Web Server on http://{args.host}:{args.port}...")
         uvicorn.run("src.web.app:app", host=args.host, port=args.port, reload=False)
         return
 
@@ -47,8 +47,8 @@ def main():
             user_name = "Chandlerding Employee"
 
         print("=" * 70)
-        print("Altostrat Enterprise HR Virtual Assistant — Interactive Terminal Mode")
-        print(f"Logged in as: {args.user_id} ({user_name}) | Model: Gemini 3.7 Flash")
+        print("JetClimbers Enterprise HR Virtual Assistant — Interactive Terminal Mode")
+        print(f"Logged in as: {args.user_id} ({user_name}) | Model: Gemini 3.8")
         print("Type 'exit' or 'quit' to end session.")
         print("=" * 70)
         session_id = f"term-{args.session_id}"

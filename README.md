@@ -1,8 +1,8 @@
-# AltoPilot: Enterprise HR Agentic Solution (MVP 1)
+# JetClimbers: Enterprise HR Agentic Solution (MVP 1)
 
-AltoPilot is a secure, conversational AI assistant designed to provide employees with immediate self-service access to HR policies, leave management, and helpdesk operations.
+JetClimbers is a secure, conversational AI assistant designed to provide employees with immediate self-service access to HR policies, leave management, and helpdesk operations.
 
-Built using Google's **Agent Development Kit (ADK)** and powered by **Gemini 2.5 Pro** on **Vertex AI**, AltoPilot bridges enterprise knowledge and transactional backends (WorkWeek HCM, ServiceImmediately ITSM) while enforcing zero-trust security and deterministic policy guardrails.
+Built using Google's **Agent Development Kit (ADK)** and powered by **Gemini 3.8** on **Vertex AI**, JetClimbers bridges enterprise knowledge and transactional backends (WorkWeek HCM, ServiceImmediately ITSM) while enforcing zero-trust security and deterministic policy guardrails.
 
 ---
 

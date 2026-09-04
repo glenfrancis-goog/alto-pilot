@@ -15,8 +15,8 @@ from src.agents.supervisor import SupervisorAgent
 from src.config import USER_RATE_LIMIT_RPM
 
 app = FastAPI(
-    title="Enterprise HR Agentic Solution (MVP 1)",
-    description="Google Cloud Well-Architected HR Virtual Assistant strictly conforming to SDD",
+    title="JetClimbers Enterprise HR Agentic Solution (MVP 1)",
+    description="JetClimbers Google Cloud Well-Architected HR Virtual Assistant strictly conforming to SDD",
     version="1.0.0"
 )
 
@@ -39,7 +39,7 @@ class CacheRefreshRequest(BaseModel):
 def healthz():
     return {
         "status": "HEALTHY",
-        "service": "enterprise-hr-agent",
+        "service": "jetclimbers-hr-agent",
         "version": "1.0.0",
         "timestamp": time.time()
     }

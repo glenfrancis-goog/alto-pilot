@@ -548,7 +548,7 @@ class SupervisorAgent:
         # R1. Greetings & Virtual Assistant Capabilities (Gemini 3.8)
         elif any(p_lower == g or p_lower.startswith(g + " ") for g in ["hello", "hi", "hey", "help", "good morning", "good afternoon"]) or p_lower in ["what can you do", "what can you do?", "who are you", "who are you?"]:
             response_text = (
-                "Hello! I am AltoPilot, your enterprise HR and workplace services virtual assistant powered by **Gemini 3.8**.\n\n"
+                "Hello! I am JetClimbers, your enterprise HR and workplace services virtual assistant powered by **Gemini 3.8**.\n\n"
                 "Here are key ways I can help you today:\n"
                 "* **Leave & Time Off:** Check vacation and sick leave balances or schedule time off in WorkWeek.\n"
                 "* **Equipment & Hardware:** Order approved home office monitors or file IT repair tickets in ServiceImmediately.\n"

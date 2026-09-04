@@ -1,4 +1,4 @@
-# System Design Document (SDD): AltoPilot Enterprise HR & Benefits Agent Platform
+# System Design Document (SDD): JetClimbers Enterprise HR & Benefits Agent Platform
 
 **Document Metadata:**
 * **Document ID:** SDD-ALTO-2026-01
@@ -16,14 +16,14 @@
 
 Enterprise organizations operate under complex, fragmented, and legally binding labor regulations across multiple jurisdictions. In APAC alone, statutory employment baselines (such as Singapore’s Ministry of Manpower mandates, Hong Kong Employment Ordinances, and Australian Fair Work regulations) define mandatory floors for paid sick leave, annual leave accrual, and government-paid parental benefits. Existing employee self-service portals suffer from high ticket resolution latencies, rigid form hierarchies, and a lack of conversational intelligence. Conversely, unconstrained Large Language Model (LLM) chatbots present severe enterprise risks: non-deterministic hallucinations of statutory benefits, lack of cryptographic non-repudiation, and absence of transactional state integration.
 
-**AltoPilot** is an autonomous, enterprise-grade HR and benefits agentic platform designed to resolve these limitations. Built on the **Gemini Enterprise Agent Platform (GEAP)** and **Agent Development Kit (ADK)**, AltoPilot moves beyond informational Q&A into fully auditable, transactional execution. 
+**JetClimbers** is an autonomous, enterprise-grade HR and benefits agentic platform designed to resolve these limitations. Built on the **Gemini Enterprise Agent Platform (GEAP)** and **Agent Development Kit (ADK)**, JetClimbers moves beyond informational Q&A into fully auditable, transactional execution. 
 
 ### Key Architectural Innovation: Dual-Channel Frontend Strategy
-AltoPilot implements a **Dual-Channel Frontend Architecture**:
-1. **Primary Employee Channel (Gemini Enterprise App):** Serves as the zero-friction, primary front door for all employees. AltoPilot is published into the corporate Gemini Enterprise app gallery, enabling employees to query policies and manage leave directly within their daily Google Workspace environment (Web, Google Chat, and Mobile) using native enterprise Single Sign-On (SSO).
-2. **Secondary Embeddable Channel (A2UI / Cloud Run Web Runtime):** Exposes a lightweight FastAPI endpoint supporting Agent-to-User Interface (A2UI) streaming and Agent-to-Agent (A2A) protocol for embedding AltoPilot into legacy corporate intranets or ServiceNow portals.
+JetClimbers implements a **Dual-Channel Frontend Architecture**:
+1. **Primary Employee Channel (Gemini Enterprise App):** Serves as the zero-friction, primary front door for all employees. JetClimbers is published into the corporate Gemini Enterprise app gallery, enabling employees to query policies and manage leave directly within their daily Google Workspace environment (Web, Google Chat, and Mobile) using native enterprise Single Sign-On (SSO).
+2. **Secondary Embeddable Channel (A2UI / Cloud Run Web Runtime):** Exposes a lightweight FastAPI endpoint supporting Agent-to-User Interface (A2UI) streaming and Agent-to-Agent (A2A) protocol for embedding JetClimbers into legacy corporate intranets or ServiceNow portals.
 
-Under the hood, AltoPilot provides:
+Under the hood, JetClimbers provides:
 * **A Multi-Agent Mesh Architecture:** Decoupling user coordination, semantic policy retrieval, HRIS transactional mutations, and high-liability escalations.
 * **Tri-Modal Identity & Delegation:** Combining user OIDC authentication, cryptographic agent SPIFFE IDs, and Workload Identity Federation (WIF) for zero-trust per-tool authorization.
 * **Code-Guarded RAG & Statutory Floor Enforcement:** An algorithmic assertion layer guaranteeing that company policy answers strictly uphold or exceed statutory legal baselines without LLM drift.
@@ -34,20 +34,20 @@ Under the hood, AltoPilot provides:
 
 ## 2. Context & Background
 
-AltoPilot originated as an experimental proof-of-concept under the Google Cloud Elevate Labs program, cataloging 155 specialized HR policy concepts across leave accruals, healthcare allowances, remote work taxation, and compassionate leave. While the initial prototype demonstrated 100% retrieval accuracy on held-out evaluation datasets using Gemini 2.5 Pro, field deployment scoping identified critical production gaps:
+JetClimbers originated as an experimental proof-of-concept under the Google Cloud Elevate Labs program, cataloging 155 specialized HR policy concepts across leave accruals, healthcare allowances, remote work taxation, and compassionate leave. While the initial prototype demonstrated 100% retrieval accuracy on held-out evaluation datasets using Gemini 2.5 Pro, field deployment scoping identified critical production gaps:
 * **Adoption Friction:** Requiring employees to navigate to a separate standalone web URL leads to low engagement and high IT portal fatigue.
 * **Read-Only Bottleneck:** Employees could ask about leave entitlements but could not seamlessly book them.
 * **Confused Deputy Risk:** API integrations used shared service accounts, preventing non-repudiation between human intent and automated tool execution.
 * **Liability in Gray Areas:** High-consequence requests (such as uncertified medical leave adjacent to public holidays or cross-border remote work exceeding tax residency thresholds) were answered textually without deterministic governance.
 
-This design document formalizes the production architecture required to transform AltoPilot into an enterprise-ready system operated by a cross-functional engineering team of five engineers, leveraging the Gemini Enterprise App as the core employee engagement interface.
+This design document formalizes the production architecture required to transform JetClimbers into an enterprise-ready system operated by a cross-functional engineering team of five engineers, leveraging the Gemini Enterprise App as the core employee engagement interface.
 
 ---
 
 ## 3. Goals & Non-Goals
 
 ### 3.1. Goals
-* **G1: Turnkey Employee Access via Gemini Enterprise App:** Seamlessly register and surface AltoPilot in the corporate Gemini Enterprise app catalog via `agents-cli publish gemini-enterprise`, supporting `@AltoPilot` invocations across Web, Google Chat, and Mobile.
+* **G1: Turnkey Employee Access via Gemini Enterprise App:** Seamlessly register and surface JetClimbers in the corporate Gemini Enterprise app catalog via `agents-cli publish gemini-enterprise`, supporting `@JetClimbers` invocations across Web, Google Chat, and Mobile.
 * **G2: Multi-Agent Specialization:** Implement a modular agent mesh separating conversational routing, policy comprehension, and API mutation.
 * **G3: Zero-Trust Identity:** Enforce cryptographic agent identity (SPIFFE) and On-Behalf-Of (OBO) token exchange across all external tools.
 * **G4: Algorithmic Compliance Assurance:** Provide 100% deterministic enforcement of regional statutory floors (e.g. Singapore MOM statutory leave floors) via pre-delivery validation hooks.
@@ -64,13 +64,13 @@ This design document formalizes the production architecture required to transfor
 
 ## 4. High-Level System Architecture
 
-AltoPilot employs a dual-channel frontend architecture orchestrated via the **Agent Gateway** on Google Cloud.
+JetClimbers employs a dual-channel frontend architecture orchestrated via the **Agent Gateway** on Google Cloud.
 
 ```
 ┌───────────────────────────────────────────────────────────┐      ┌────────────────────────────────────────┐
 │             PRIMARY CHANNEL: GEMINI ENTERPRISE APP        │      │    SECONDARY CHANNEL: EMBEDDED A2UI    │
 │  - Web Workspace (gemini.google.com)                      │      │  - Corporate Intranet Webhook / Portal │
-│  - Google Chat @AltoPilot bot & Mobile Apps               │      │  - ServiceNow / Custom Portal Iframe   │
+│  - Google Chat @JetClimbers bot & Mobile Apps               │      │  - ServiceNow / Custom Portal Iframe   │
 │  - Native Google Workspace OIDC Identity (ID-1)           │      │  - Headless FastAPI on Cloud Run       │
 └─────────────────────────────┬─────────────────────────────┘      └───────────────────┬────────────────────┘
                               │                                                        │
@@ -106,7 +106,7 @@ AltoPilot employs a dual-channel frontend architecture orchestrated via the **Ag
 ```
 
 ### 4.1. Core Components
-1. **Gemini Enterprise App (Primary Front Door):** The managed enterprise conversational interface where employees interact with AltoPilot. Handles authentication, conversation state, mobile responsiveness, and Google Chat integration.
+1. **Gemini Enterprise App (Primary Front Door):** The managed enterprise conversational interface where employees interact with JetClimbers. Handles authentication, conversation state, mobile responsiveness, and Google Chat integration.
 2. **Agent Gateway:** An Envoy-based managed proxy enforcing ingress/egress policies, Common Expression Language (CEL) authorization, and SPIFFE identity propagation.
 3. **Coordinator Agent:** The central orchestration engine responsible for intent classification, session state management, and multi-agent synthesis.
 4. **Policy Specialist Subagent:** Executes dense vector and lexical search across the 155 OKF policy concepts, enforcing jurisdictional statutory floors before emitting answers.
@@ -118,13 +118,13 @@ AltoPilot employs a dual-channel frontend architecture orchestrated via the **Ag
 ## 5. Detailed Design & Core Interactions
 
 ### 5.1. Tri-Modal Identity & Delegation Sequence
-To prevent confused-deputy attacks and ensure cryptographic non-repudiation, AltoPilot implements a tri-modal identity scheme:
+To prevent confused-deputy attacks and ensure cryptographic non-repudiation, JetClimbers implements a tri-modal identity scheme:
 
 ```
 Employee (ID-1)         Gemini Enterprise App         Agent Gateway            Coordinator Agent        WorkWeek MCP Server
        │                          │                         │                           │                       │
        │── 1. Logged into GE ────►│                         │                           │                       │
-       │   ("@AltoPilot query")   │── 2. :streamQuery ─────►│                           │                       │
+       │   ("@JetClimbers query")   │── 2. :streamQuery ─────►│                           │                       │
        │                          │      (OIDC Claims)      │── 3. Mint SPIFFE (ID-2) ─►│                       │
        │                          │                         │                           │── 4. Call Tool ──────►│
        │                          │                         │◄── 5. Exchange Token ─────│   (OBO Delegation)    │
@@ -134,11 +134,11 @@ Employee (ID-1)         Gemini Enterprise App         Agent Gateway            C
 ```
 
 1. **User Identity ($ID_1$):** Human principal authenticated via enterprise Google Workspace OIDC identity. The Gemini Enterprise app propagates verified claims (`email`, `user_id`, `org_unit`) in the invocation context.
-2. **Agent Identity ($ID_2$):** Workload identity represented by a SPIFFE ID (`spiffe://altostrat.internal/ns/hr/sa/altopilot-coordinator`) embedded in mTLS certificates.
+2. **Agent Identity ($ID_2$):** Workload identity represented by a SPIFFE ID (`spiffe://altostrat.internal/ns/hr/sa/jetclimbers-coordinator`) embedded in mTLS certificates.
 3. **Delegated Identity ($ID_3$):** Short-lived Downscoped Access Token minted via Workload Identity Federation (WIF) reflecting both the human principal and the agent ID. Third-party target systems log both identities in their internal audit records.
 
 ### 5.2. Registration & Publishing Lifecycle (GE App Integration)
-AltoPilot is registered with the enterprise catalog using `agents-cli`:
+JetClimbers is registered with the enterprise catalog using `agents-cli`:
 
 ```bash
 # 1. Deploy ADK Agent to Vertex AI Agent Runtime
@@ -147,21 +147,21 @@ agents-cli deploy --target agent-runtime --project mba-codemender
 # 2. Register with Gemini Enterprise App
 agents-cli publish gemini-enterprise \
   --registration-type adk \
-  --agent-runtime-id "projects/799659834628/locations/us-central1/reasoningEngines/altopilot-prod" \
+  --agent-runtime-id "projects/799659834628/locations/us-central1/reasoningEngines/jetclimbers-prod" \
   --gemini-enterprise-app-id "projects/799659834628/locations/global/collections/default_collection/engines/enterprise-hr" \
-  --display-name "AltoPilot HR Assistant" \
+  --display-name "JetClimbers HR Assistant" \
   --description "Autonomous HR policy guidance, Singapore MOM statutory compliance, and leave bookings." \
   --tool-description "Answers employee policy queries, checks leave balances in WorkWeek, and submits leave requests."
 ```
 
-* **Administrative Governance Gate:** Once registered, AltoPilot enters the Gemini Enterprise Admin Console in `PENDING_APPROVAL` status. An authorized Google Workspace / Cloud Administrator reviews the tool scopes, policies, and target models before publishing it enterprise-wide.
+* **Administrative Governance Gate:** Once registered, JetClimbers enters the Gemini Enterprise Admin Console in `PENDING_APPROVAL` status. An authorized Google Workspace / Cloud Administrator reviews the tool scopes, policies, and target models before publishing it enterprise-wide.
 
 ### 5.3. Two-Phase Commit (2PC) in Gemini Enterprise Chat
 Within the Gemini Enterprise conversational interface:
 
 ```
 [Phase 1: Preparation & Draft Synthesis]
-User: "@AltoPilot I had a baby yesterday, can you submit 4 days paternity leave starting Monday?"
+User: "@JetClimbers I had a baby yesterday, can you submit 4 days paternity leave starting Monday?"
 ➔ Coordinator queries Policy Subagent ➔ Validates MOM statutory compliance
 ➔ Queries WorkWeek for Balance Check (20 days available)
 ➔ Emits Structured Markdown Draft Card:
@@ -175,7 +175,7 @@ User: "@AltoPilot I had a baby yesterday, can you submit 4 days paternity leave 
 
 [Phase 2: Human Execution Gate & Commit]
 User replies: "Confirm"
-➔ AltoPilot verifies cryptographic session context
+➔ JetClimbers verifies cryptographic session context
 ➔ High-liability threshold check:
     ├─ Standard Leave (<= 5 days): Commits transaction to WorkWeek API ➔ Emits confirmation receipt
     └─ Extended / High-Risk (> 14 days, uncertified sick leave, cross-border):
@@ -183,7 +183,7 @@ User replies: "Confirm"
 ```
 
 ### 5.4. Code-Guarded RAG & Statutory Floor Enforcement
-LLMs must never be permitted to unilaterally calculate statutory minimums. AltoPilot separates semantic retrieval from mathematical policy validation:
+LLMs must never be permitted to unilaterally calculate statutory minimums. JetClimbers separates semantic retrieval from mathematical policy validation:
 
 ```python
 def validate_policy_entitlement(
@@ -232,12 +232,12 @@ Following our security guardrail pattern:
 ## 7. Observability, Telemetry & Evaluation Flywheel
 
 ### 7.1. OpenTelemetry (OTel) Distributed Tracing
-AltoPilot instruments all interactions with Layer-8 Agentic OTel:
+JetClimbers instruments all interactions with Layer-8 Agentic OTel:
 * **Trace Attributes:** `gen_ai.agent.name`, `gen_ai.prompt.tokens`, `gen_ai.completion.tokens`, `gen_ai.tool.name`, `gen_ai.tool.duration_ms`, `spiffe.identity`.
 * **Distributed Propagation:** Trace contexts are propagated across Agent Gateway, subagents, and downstream FastMCP servers, terminating in Google Cloud Trace.
 
 ### 7.2. BigQuery Audit Ledger Schema
-Interaction data is streamed in real-time to a partitioned BigQuery table (`altopilot_telemetry.audit_ledger_v1`):
+Interaction data is streamed in real-time to a partitioned BigQuery table (`jetclimbers_telemetry.audit_ledger_v1`):
 
 | Field Name | Type | Description |
 | :--- | :--- | :--- |
@@ -295,7 +295,7 @@ Before any agent prompt, OKF policy update, or tool connector is promoted to sta
 
 * **Milestone 1 (Weeks 1-2):** Deploy Coordinator Agent and FastMCP connectors for WorkWeek and ServiceImmediately in sandbox.
 * **Milestone 2 (Weeks 3-4):** Integrate 155 OKF concepts with deterministic statutory floor validation hooks for Singapore and Hong Kong.
-* **Milestone 3 (Weeks 5-6):** Implement Agent Gateway with Model Armor, SPIFFE identity exchange, and register AltoPilot with Gemini Enterprise App via `agents-cli publish`.
+* **Milestone 3 (Weeks 5-6):** Implement Agent Gateway with Model Armor, SPIFFE identity exchange, and register JetClimbers with Gemini Enterprise App via `agents-cli publish`.
 * **Milestone 4 (Weeks 7-8):** Run 100-user internal pilot across Altostrat APAC Strategic Advisory teams via Google Chat and Gemini Enterprise web app; verify zero compliance drift and sub-500ms median latency.
 
 ---

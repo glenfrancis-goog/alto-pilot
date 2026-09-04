@@ -1,4 +1,4 @@
-"""HR Policy Agent — entry point for Altostrat Singapore."""
+"""JetClimbers HR Policy Agent — entry point for Altostrat Singapore."""
 
 import asyncio
 import os
@@ -34,7 +34,7 @@ try:
     root_agent = LlmAgent(
         model=config.GEMINI_MODEL,
         name="hr_policy_agent",
-        description="HR Policy Assistant for Altostrat Singapore employees.",
+        description="JetClimbers HR Policy Assistant for Altostrat Singapore employees.",
         instruction=POLICY_AGENT_PROMPT,
         tools=select_tools(config.RETRIEVAL_MODE),
     )

@@ -1,4 +1,4 @@
-"""Configuration for Altostrat HR Policy Agent."""
+"""Configuration for JetClimbers HR Policy Agent."""
 
 import os
 import pathlib
@@ -23,4 +23,4 @@ VERTEX_AI_SEARCH_LOCATION = os.getenv("VERTEX_AI_SEARCH_LOCATION", "global")
 VERTEX_AI_DATA_STORE_ID = os.getenv("VERTEX_AI_DATA_STORE_ID", "hr-policies-lab-store")
 VERTEX_AI_SEARCH_ENGINE_ID = os.getenv("VERTEX_AI_SEARCH_ENGINE_ID", "hr-policies-lab-engine")
 
-APP_NAME = "altostrat_hr_policy_agent"
+APP_NAME = "jetclimbers_hr_policy_agent"

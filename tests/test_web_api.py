@@ -42,7 +42,8 @@ def test_cache_refresh_api():
 def test_web_ui_html():
     res = client.get("/")
     assert res.status_code == 200
-    assert "Altostrat Enterprise HR Assistant" in res.text
+    assert "JetClimbers" in res.text
+    assert "Enterprise HR Assistant" in res.text
 
 def test_chat_completions_returns_chips_and_gemini_model():
     payload = {
