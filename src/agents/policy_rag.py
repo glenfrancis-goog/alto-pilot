@@ -53,7 +53,8 @@ class PolicyRagAgent:
             "can", "are", "about", "tell", "explain", "with", "from", "company",
             "altostrat", "singapore", "employee", "handbook", "there", "have",
             "been", "would", "like", "know", "please", "help", "near", "office",
-            "rules", "rule", "under", "regarding", "concerning", "business"
+            "rules", "rule", "under", "regarding", "concerning", "business",
+            "may", "might", "must", "also", "will"
         }
         synonyms = {
             "dinner": ["meal", "dining"],

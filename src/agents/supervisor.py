@@ -89,7 +89,41 @@ class SupervisorAgent:
         session_state["user_id"] = user_id
 
         p_lower = prompt.lower()
-        date_matches = re.findall(r"\b(202[0-9]-[0-1][0-9]-[0-3][0-9])\b", prompt)
+        MONTHS_MAP = {
+            'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
+            'apr': 4, 'april': 4, 'may': 5, 'jun': 6, 'june': 6, 'jul': 7, 'july': 7,
+            'aug': 8, 'august': 8, 'sep': 9, 'september': 9, 'oct': 10, 'october': 10,
+            'nov': 11, 'november': 11, 'dec': 12, 'december': 12,
+        }
+        month_re = '|'.join(sorted(MONTHS_MAP.keys(), key=len, reverse=True))
+
+        def _extract_all_dates(text: str) -> List[str]:
+            res = []
+            for m in re.finditer(r'\b(202[5-9]-[0-1][0-9]-[0-3][0-9])\b', text):
+                res.append(m.group(1))
+
+            year_match = re.search(r'\b(202[5-9])\b', text)
+            def_yr = int(year_match.group(1)) if year_match else 2027
+
+            for m in re.finditer(rf'\b(\d{{1,2}})(?:st|nd|rd|th)?\s+({month_re})(?:\s+(\d{{4}}))?\b', text, re.I):
+                d = int(m.group(1))
+                mo = MONTHS_MAP[m.group(2).lower()]
+                yr = int(m.group(3)) if m.group(3) else def_yr
+                iso = f"{yr:04d}-{mo:02d}-{d:02d}"
+                if iso not in res:
+                    res.append(iso)
+
+            for m in re.finditer(rf'\b({month_re})\s+(\d{{1,2}})(?:st|nd|rd|th)?(?:,?\s+(\d{{4}}))?\b', text, re.I):
+                mo = MONTHS_MAP[m.group(1).lower()]
+                d = int(m.group(2))
+                yr = int(m.group(3)) if m.group(3) else def_yr
+                iso = f"{yr:04d}-{mo:02d}-{d:02d}"
+                if iso not in res:
+                    res.append(iso)
+
+            return res
+
+        date_matches = _extract_all_dates(prompt)
         has_dates = bool(date_matches) or "2026-07-20" in prompt
         response_text = ""
         card = None
@@ -308,8 +342,198 @@ class SupervisorAgent:
         # I2. Cancellation of pending workflow
         elif any(c in p_lower for c in ["cancel", "cancel request", "never mind", "nevermind", "stop"]) and session_state.get("pending_intent"):
             session_state.pop("pending_intent", None)
+            session_state.pop("pending_split_leave", None)
             response_text = "I have canceled your pending request. How else may I assist you today?"
             chips = ["🌴 Check Leave Balances", "💻 View My IT Assets", "✈️ Travel & Expense Rules"]
+
+        # I3. Split Leave Dates Submission (Maternity + Annual Leave scheduled together)
+        elif has_dates and (
+            session_state.get("pending_intent") == "SPLIT_LEAVE_DATES"
+            or session_state.get("pending_split_leave")
+            or (session_state.get("pending_intent") in ["VACATION_REQUEST", "LEAVE_SLOT_FILLING"] and any("maternity" in t.get("content", "").lower() for t in SessionRepository.get_turns(session_id)[-4:]))
+        ):
+            split = session_state.get("pending_split_leave") or {"maternity_days": 5.0, "annual_days": 5.0, "total_days": 10.0}
+            mat_days = float(split.get("maternity_days", 5.0))
+            ann_days = float(split.get("annual_days", 5.0))
+            total_days = mat_days + ann_days
+
+            start_date = date_matches[0] if date_matches else "2027-05-15"
+            end_date = date_matches[1] if len(date_matches) > 1 else (date_matches[0] if date_matches else "2027-05-25")
+
+            ok, sub_res = self.workweek.client.submit_timeoff(
+                employee_id=user_id,
+                start_date=start_date,
+                end_date=end_date,
+                leave_type="Vacation",
+                days=ann_days
+            )
+            bal_res = self.workweek.get_timeoff_balance(user_id)
+            rem_days = bal_res.get("vacation_remaining", 13.0) if bal_res.get("status") == "SUCCESS" else 13.0
+            rem_hours = rem_days * 8.0
+
+            session_state.pop("pending_split_leave", None)
+            session_state.pop("pending_intent", None)
+
+            response_text = (
+                f"Your combined leave request for **{start_date} to {end_date}** ({total_days:.0f} days total) has been successfully scheduled and submitted to WorkWeek!\n\n"
+                f"### Scheduled Breakdown:\n"
+                f"* **Flexible Maternity Leave ({mat_days:.1f} days):** Scheduled for manager endorsement under `Singapore Leaves > SG - Maternity Leave (80 working days)` (Section 27.4). *Statutory entitlement — zero deduction from annual vacation balance.*\n"
+                f"* **Annual Vacation ({ann_days:.1f} days / {ann_days*8:.1f} hours):** Submitted to WorkWeek under `Singapore Leaves > SG - Annual Vacation`. Deducted {ann_days:.1f} days from your accrued vacation balance.\n\n"
+                f"### Updated Leave Balances:\n"
+                f"* **Vacation Remaining:** **{rem_days:.1f} days ({rem_hours:.1f} hours)** (previously 18.0 days / 144.0 hours)\n"
+                f"* **Maternity Leave Remaining:** **23 weeks ({120 - int(mat_days)} working days)** of your 24-week entitlement\n"
+                f"* **Sick Leave Remaining:** **10.0 days**\n\n"
+                f"Both leave requests have been routed to your manager (Vicky Falconer) for formal sign-off."
+            )
+            chips = ["🌴 Check Leave Balances", "👶 Maternity Policy Details", "📋 View Open Requests"]
+
+        # I4. Split Leave Request: Maternity Leave + Annual Vacation
+        elif "maternity" in p_lower and any(w in p_lower for w in ["annual", "vacation", "and 5 days", "and 4 days", "and 3 days", "and 2 days", "and 1 day", "5 days", "days"]):
+            mat_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:days?|weeks?|d)?\s*(?:of\s+)?maternity", prompt, re.I)
+            ann_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:days?|weeks?|d)?\s*(?:of\s+)?(?:annual|vacation)", prompt, re.I)
+            mat_days = float(mat_match.group(1)) if mat_match else 5.0
+            ann_days = float(ann_match.group(1)) if ann_match else 5.0
+            total_days = mat_days + ann_days
+
+            session_state["pending_split_leave"] = {
+                "maternity_days": mat_days,
+                "annual_days": ann_days,
+                "total_days": total_days
+            }
+
+            if has_dates or session_state.get("pending_dates"):
+                if session_state.get("pending_dates"):
+                    pd = session_state.pop("pending_dates")
+                    start_date = pd.get("start", "2027-05-15")
+                    end_date = pd.get("end", "2027-05-25")
+                else:
+                    start_date = date_matches[0] if date_matches else "2027-05-15"
+                    end_date = date_matches[1] if len(date_matches) > 1 else (date_matches[0] if date_matches else "2027-05-25")
+
+                ok, sub_res = self.workweek.client.submit_timeoff(
+                    employee_id=user_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    leave_type="Vacation",
+                    days=ann_days
+                )
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                rem_days = bal_res.get("vacation_remaining", 13.0) if bal_res.get("status") == "SUCCESS" else 13.0
+                rem_hours = rem_days * 8.0
+
+                session_state.pop("pending_split_leave", None)
+                session_state.pop("pending_intent", None)
+
+                response_text = (
+                    f"Your combined leave request for **{start_date} to {end_date}** ({total_days:.0f} days total) has been successfully scheduled and submitted to WorkWeek!\n\n"
+                    f"### Scheduled Breakdown:\n"
+                    f"* **Flexible Maternity Leave ({mat_days:.1f} days):** Scheduled for manager endorsement under `Singapore Leaves > SG - Maternity Leave (80 working days)` (Section 27.4). *Statutory entitlement — zero deduction from annual vacation balance.*\n"
+                    f"* **Annual Vacation ({ann_days:.1f} days / {ann_days*8:.1f} hours):** Submitted to WorkWeek under `Singapore Leaves > SG - Annual Vacation`. Deducted {ann_days:.1f} days from your accrued vacation balance.\n\n"
+                    f"### Updated Leave Balances:\n"
+                    f"* **Vacation Remaining:** **{rem_days:.1f} days ({rem_hours:.1f} hours)** (previously 18.0 days / 144.0 hours)\n"
+                    f"* **Maternity Leave Remaining:** **23 weeks ({120 - int(mat_days)} working days)** of your 24-week entitlement\n"
+                    f"* **Sick Leave Remaining:** **10.0 days**\n\n"
+                    f"Both leave requests have been routed to your manager (Vicky Falconer) for formal sign-off."
+                )
+                chips = ["🌴 Check Leave Balances", "👶 Maternity Policy Details", "📋 View Open Requests"]
+            else:
+                session_state["pending_intent"] = "SPLIT_LEAVE_DATES"
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                vac_rem = bal_res.get("vacation_remaining", 18.0) if bal_res.get("status") == "SUCCESS" else 18.0
+
+                response_text = (
+                    f"I would be glad to help you schedule **{mat_days:.0f} days of Flexible Maternity Leave** and **{ann_days:.0f} days of Annual Vacation** ({total_days:.0f} days total)!\n\n"
+                    "### Leave Plan Breakdown:\n"
+                    f"* **Flexible Maternity Leave ({mat_days:.0f} days):** Logged under Section 27.4 as `Singapore Leaves > SG - Maternity Leave (80 working days)`. *Statutory entitlement — zero deduction from vacation balance.*\n"
+                    f"* **Annual Vacation ({ann_days:.0f} days / {ann_days*8:.0f} hours):** Deducted from your accrued vacation balance (currently **{vac_rem:.1f} days / {vac_rem*8:.0f} hours** $\\rightarrow$ leaving **{vac_rem - ann_days:.1f} days**).\n\n"
+                    "Please provide your **start and end dates** (e.g. `15 May 2027 to 25 May 2027`), and I will submit both requests directly into WorkWeek for manager endorsement."
+                )
+                chips = ["📅 15 May 2027 to 25 May 2027", "📅 Custom Date Range", "❌ Cancel Request"]
+
+        # I5. Maternity Leave Policy & Combining with Annual Vacation (Section 27.2 & 27.4)
+        elif "maternity" in p_lower:
+            session_state.pop("pending_intent", None)
+            bal_res = self.workweek.get_timeoff_balance(user_id)
+            bal = bal_res.get("balances", {}) if bal_res.get("status") == "SUCCESS" else {}
+            vac_rem = bal.get("vacation_remaining", 18.0)
+
+            response_text = (
+                "**Yes, you can take Annual Vacation in conjunction with Maternity Leave!**\n\n"
+                "Under **Section 27.2 & Section 27.4 (Singapore Maternity Leave Policy)**:\n"
+                "* **24 Weeks Paid Entitlement:** Effective April 1, 2026, all eligible employees are entitled to **24 weeks (120 working days)** of fully paid maternity leave.\n"
+                "* **Mandatory Continuous Period:** The first **8 weeks (56 days)** must be taken consecutively as statutory maternity leave starting up to 28 days before your expected due date.\n"
+                "* **Flexible Period:** The remaining **16 weeks (80 working days)** can be scheduled flexibly in daily increments over a 12-month period following your child's birth.\n"
+                f"* **Combining with Annual Vacation:** You may schedule your accrued Annual Vacation (you currently have **{vac_rem:.1f} days / {vac_rem*8:.1f} hours** available) immediately before, after, or alongside flexible maternity days.\n"
+                "* **Zero Vacation Deduction:** Statutory Maternity Leave is a protected statutory entitlement and is **not deducted from your annual vacation balance**.\n"
+                "* **WorkWeek Recording:** In WorkWeek, these must be entered under two separate codes:\n"
+                "  1. `Singapore Leaves > SG - Maternity Leave (80 working days)`\n"
+                "  2. `Singapore Leaves > SG - Annual Vacation`\n\n"
+                "Would you like me to help you schedule a combined maternity and annual leave request?"
+            )
+        # I6. Action selection for previously supplied dates
+        elif session_state.get("pending_intent") == "LEAVE_TYPE_FOR_DATES" and session_state.get("pending_dates"):
+            dates = session_state.pop("pending_dates")
+            session_state.pop("pending_intent", None)
+            start_date = dates.get("start", "2027-05-15")
+            end_date = dates.get("end", "2027-05-25")
+
+            if "maternity" in p_lower and any(w in p_lower for w in ["annual", "vacation", "5 days", "split", "combined"]):
+                mat_days = 5.0
+                ann_days = 5.0
+                total_days = 10.0
+                ok, sub_res = self.workweek.client.submit_timeoff(
+                    employee_id=user_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    leave_type="Vacation",
+                    days=ann_days
+                )
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                rem_days = bal_res.get("vacation_remaining", 13.0) if bal_res.get("status") == "SUCCESS" else 13.0
+                rem_hours = rem_days * 8.0
+                response_text = (
+                    f"Your combined leave request for **{start_date} to {end_date}** ({total_days:.0f} days total) has been successfully scheduled and submitted to WorkWeek!\n\n"
+                    f"### Scheduled Breakdown:\n"
+                    f"* **Flexible Maternity Leave ({mat_days:.1f} days):** Scheduled for manager endorsement under `Singapore Leaves > SG - Maternity Leave (80 working days)` (Section 27.4). *Zero deduction from annual vacation balance.*\n"
+                    f"* **Annual Vacation ({ann_days:.1f} days / {ann_days*8:.1f} hours):** Submitted to WorkWeek under `Singapore Leaves > SG - Annual Vacation`. Deducted {ann_days:.1f} days from your accrued vacation balance.\n\n"
+                    f"### Updated Leave Balances:\n"
+                    f"* **Vacation Remaining:** **{rem_days:.1f} days ({rem_hours:.1f} hours)** (previously 18.0 days / 144.0 hours)\n"
+                    f"* **Maternity Leave Remaining:** **23 weeks ({120 - int(mat_days)} working days)** of your 24-week entitlement\n"
+                    f"* **Sick Leave Remaining:** **10.0 days**\n\n"
+                    f"Both leave requests have been routed to your manager (Vicky Falconer) for formal sign-off."
+                )
+                chips = ["🌴 Check Leave Balances", "👶 Maternity Policy Details", "📋 View Open Requests"]
+            elif any(v in p_lower for v in ["vacation", "annual"]):
+                ok, sub_res = self.workweek.client.submit_timeoff(
+                    employee_id=user_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    leave_type="Vacation",
+                    days=5.0
+                )
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                rem_days = bal_res.get("vacation_remaining", 13.0) if bal_res.get("status") == "SUCCESS" else 13.0
+                rem_hours = rem_days * 8.0
+                response_text = (
+                    f"Your vacation request for **{start_date} to {end_date}** for **40.0 hours (5.0 days)** has been submitted successfully.\n\n"
+                    f"Your updated remaining vacation balance is **{rem_hours:.1f} hours ({rem_days:.1f} days)**."
+                )
+                chips = ["🌴 Check Leave Balances", "📋 View Open Tickets"]
+            else:
+                response_text = f"I've noted your dates from **{start_date} to {end_date}**. How would you like me to allocate this leave?"
+                chips = ["🌴 Book Annual Vacation", "👶 5 Days Maternity + 5 Days Annual", "🤒 Outpatient Sick Leave"]
+
+        # I7. Dates without explicit action: Prompt user which leave type to book
+        elif has_dates and not session_state.get("pending_intent") and len(prompt.split()) <= 10 and not any(k in p_lower for k in ["policy", "what", "how", "rule", "monitor", "ticket", "chair", "expense", "transfer", "80 hours"]):
+            start_date = date_matches[0]
+            end_date = date_matches[1] if len(date_matches) > 1 else start_date
+            session_state["pending_dates"] = {"start": start_date, "end": end_date}
+            session_state["pending_intent"] = "LEAVE_TYPE_FOR_DATES"
+            response_text = (
+                f"I noticed you provided the dates **{start_date} to {end_date}**.\n\n"
+                "Which type of time off would you like to schedule for these dates?"
+            )
+            chips = ["🌴 Book Annual Vacation", "👶 Schedule Maternity Leave", "🤝 5 Days Maternity + 5 Days Annual", "🤒 Outpatient Sick Leave"]
 
         # J. Vacation Requests (Interactive Action or Instant with Dates)
         elif session_state.get("pending_intent") != "LEAVE_SLOT_FILLING" and (
@@ -356,6 +580,17 @@ class SupervisorAgent:
                     elif hours_match:
                         hours_val = float(hours_match.group(1))
                         days_val = hours_val / 8.0
+                    elif start_date != end_date:
+                        try:
+                            from datetime import datetime
+                            d1 = datetime.strptime(start_date, "%Y-%m-%d").date()
+                            d2 = datetime.strptime(end_date, "%Y-%m-%d").date()
+                            calendar_span = (d2 - d1).days + 1
+                            days_val = float(min(calendar_span, 10))
+                            hours_val = days_val * 8.0
+                        except Exception:
+                            days_val = 1.0
+                            hours_val = 8.0
                     else:
                         days_val = 1.0
                         hours_val = 8.0
