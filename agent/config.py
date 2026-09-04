@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Model selection
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8")
 
 # Retrieval mode: "okf" | "rag" | "hybrid"
 RETRIEVAL_MODE = os.getenv("RETRIEVAL_MODE", "okf").lower()

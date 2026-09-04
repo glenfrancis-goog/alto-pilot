@@ -91,6 +91,7 @@ class SupervisorAgent:
         p_lower = prompt.lower()
         response_text = ""
         card = None
+        chips: List[str] = []
         thinking_budget = THINKING_BUDGET_INSTANT
 
         # Step 5: Process Pre-flight User Confirmations (Human-in-the-loop)
@@ -106,6 +107,7 @@ class SupervisorAgent:
                     days=float(params.get("days", 1.0))
                 )
                 response_text = res.get("message")
+                chips = ["🌴 Check Leave Balances", "📋 View Open Tickets"]
             elif action_type == "PURGE_DATA":
                 res = self.saga.execute_gdpr_rtbf_purge(user_id)
                 response_text = res.get("message")
@@ -117,6 +119,7 @@ class SupervisorAgent:
                 f"I'm unable to process that request because {leave_name} is not currently supported under the Altostrat Singapore leave policy. "
                 "Supported leave types in WorkWeek are: **Vacation**, **Outpatient Sick Leave**, **Hospitalization Leave**, **Bereavement Leave**, and **Carer's Leave**."
             )
+            chips = ["🌴 Annual Vacation", "🤒 Outpatient Sick Leave", "🏥 Hospitalization Leave", "🤝 Carer's Leave"]
 
         # A. Priority Anti-Inflation & Downgrade Callback (FR-4.3 / Test #0 Diagnostic)
         elif ("password" in p_lower or "login" in p_lower or "forgot" in p_lower) and ("critical" in p_lower or "p1" in p_lower or "priority-1" in p_lower or "urgent" in p_lower or "reset" in p_lower):
@@ -125,6 +128,7 @@ class SupervisorAgent:
                 "Routine account and password reset requests cannot be filed with Critical priority. "
                 "Your request has been automatically downgraded and queued with **Priority 4 - Low** to Service Desk."
             )
+            chips = ["🔑 Password Reset (Low)", "📋 View Open Tickets", "📞 Contact Service Desk"]
 
         # B. Context Summarization across multi-turn session (Turn 9 of 10-turn)
         elif "summarize all actions" in p_lower or "summary of all actions" in p_lower or "what have we done in this session" in p_lower:
@@ -518,6 +522,7 @@ class SupervisorAgent:
                 f"* **Office/Home Address:** {p.get('home_address')}\n"
                 f"* **Phone:** {p.get('phone_number')}"
             )
+            chips = ["🌴 Check Leave Balances", "📋 View Open Tickets", "🏠 Update Home Address"]
 
         # P. WorkWeek Leave Balance Check (Days)
         elif any(t in p_lower for t in ["leave balance", "days of vacation", "vacation and sick leave", "sick leave do i have remaining", "how much sick leave", "how many days of paid vacation", "how many days of vacation and sick leave"]):
@@ -527,6 +532,7 @@ class SupervisorAgent:
                 f"Your available leave balances: **Vacation:** {bal.get('vacation_remaining', 18.0)} days | "
                 f"**Sick Leave:** {bal.get('sick_remaining', 10.0)} days"
             )
+            chips = ["🌴 Book Annual Vacation", "🤒 Take Sick Leave", "📊 Vacation Accrual Scale"]
 
         # Q. ServiceImmediately Ticket Status or Listing
         elif any(t in p_lower for t in ["my tickets", "open tickets", "support ticket", "support incident", "open incident", "my incident", "active incident", "serviceimmediately"]):
@@ -537,11 +543,152 @@ class SupervisorAgent:
                 response_text = f"**Your Active Support Tickets:**\n" + "\n".join(lines)
             else:
                 response_text = "You have no active support tickets on file."
+            chips = ["📝 File New Ticket", "✏️ Add Comment to Ticket", "🔄 Refresh Ticket List"]
 
-        # R. General Policy Q&A (Grounding & Citations)
+        # R1. Greetings & Virtual Assistant Capabilities (Gemini 3.8)
+        elif any(p_lower == g or p_lower.startswith(g + " ") for g in ["hello", "hi", "hey", "help", "good morning", "good afternoon"]) or p_lower in ["what can you do", "what can you do?", "who are you", "who are you?"]:
+            response_text = (
+                "Hello! I am AltoPilot, your enterprise HR and workplace services virtual assistant powered by **Gemini 3.8**.\n\n"
+                "Here are key ways I can help you today:\n"
+                "* **Leave & Time Off:** Check vacation and sick leave balances or schedule time off in WorkWeek.\n"
+                "* **Equipment & Hardware:** Order approved home office monitors or file IT repair tickets in ServiceImmediately.\n"
+                "* **Policy Guidance:** Grounded handbook answers across all 155 Altostrat Singapore policy sections.\n"
+                "* **Travel & Expenses:** Business meal caps, 30-day Concur deadlines, and relocation packages.\n\n"
+                "How can I assist you right now?"
+            )
+            chips = ["🌴 Check Leave Balances", "💻 Order 27-inch Monitor", "✈️ Travel & Expense Rules", "📋 View My Active Tickets"]
+
+        # R2. Slot-Filling Continuation: Leave Type Selected
+        elif session_state.get("pending_intent") == "LEAVE_SLOT_FILLING":
+            if any(v in p_lower for v in ["vacation", "annual"]):
+                session_state["pending_intent"] = "VACATION_REQUEST"
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                vac_rem = bal_res.get("vacation_remaining", 16.0) if bal_res.get("status") == "SUCCESS" else 16.0
+                vac_hours = vac_rem * 8.0
+                response_text = (
+                    f"Great, let's schedule your **Annual Vacation**! You currently have **{vac_hours:.1f} hours ({vac_rem:.1f} days)** available.\n\n"
+                    "Please provide:\n"
+                    "1. **Start and end dates** (e.g. `2026-09-15 to 2026-09-18`)\n"
+                    "2. **Duration** (e.g. `4 days` or `32 hours`)\n\n"
+                    "Once provided, I will submit it directly to WorkWeek for manager endorsement."
+                )
+                chips = ["📅 Next Monday (1 day / 8 hrs)", "📅 Next Week (5 days / 40 hrs)", "📅 Custom Date Range"]
+            elif any(s in p_lower for s in ["sick", "mc", "outpatient"]):
+                session_state.pop("pending_intent", None)
+                bal_res = self.workweek.get_timeoff_balance(user_id)
+                sick_rem = bal_res.get("sick_remaining", 10.0) if bal_res.get("status") == "SUCCESS" else 10.0
+                response_text = (
+                    f"Under Section 1.1, you have **{sick_rem:.1f} days** of paid outpatient sick leave remaining.\n\n"
+                    "* **Shift Notice:** Please ensure your manager is notified at least 1 hour before your standard shift.\n"
+                    "* **Medical Certificate (MC):** An official MC is required for absences exceeding 2 consecutive working days.\n\n"
+                    "Would you like me to book your sick leave for specific dates?"
+                )
+                chips = ["🤒 Book Sick Leave for Today", "🤒 Book 2 Days Sick Leave", "📄 Medical Certificate Rules"]
+            elif any(h in p_lower for h in ["hospital", "surgery", "inpatient"]):
+                session_state.pop("pending_intent", None)
+                response_text = (
+                    "Under Singapore employment regulations and Section 1.1, full-time employees are entitled to up to **60 days of paid hospitalization leave** per calendar year (inclusive of outpatient sick leave).\n\n"
+                    "* **Wake-up Notice:** You or a designated family member must notify People Operations within **48 hours** of emergency or surgical admission.\n"
+                    "* **Documentation:** An official Hospitalization Medical Certificate from an accredited hospital is required upon discharge.\n\n"
+                    "Would you like me to file a preliminary HR notification ticket on your behalf?"
+                )
+                chips = ["📋 Open Hospitalization Notice Ticket", "📄 Hospitalization Guidelines", "📞 Contact People Operations"]
+            elif "carer" in p_lower:
+                session_state.pop("pending_intent", None)
+                response_text = (
+                    "Under Section 23.2, eligible full-time employees are entitled to an exact cap of up to **5 paid days per calendar year** for Carer's Leave to care for an immediate family member during medical illness.\n\n"
+                    "What dates do you need to take carer's leave for?"
+                )
+                chips = ["🤝 1 Day Carer's Leave", "🤝 2 Days Carer's Leave", "📅 Check Leave Balances"]
+            else:
+                session_state.pop("pending_intent", None)
+                rag_res = self.policy_rag.search_and_answer(prompt)
+                response_text = rag_res.get("answer")
+                chips = rag_res.get("chips", [])
+
+        # R3. Proactive Slot-Filling: Underspecified Leave Requests
+        elif (
+            any(phrase in p_lower for phrase in [
+                "apply for leave", "take leave", "request leave", "book leave",
+                "need leave", "take time off", "need time off", "apply for time off",
+                "request time off", "take some days off", "take a day off", "how do i request leave"
+            ])
+            or (("leave" in p_lower or "time off" in p_lower) and any(w in p_lower for w in ["apply", "request", "book", "take"]))
+        ) and not any(p in p_lower for p in ["accrue", "accrual", "tenure", "carryover", "carry over", "sick", "medical leave", "carer", "paternity", "parental", "unpaid", "hospital", "2026-", "monday"]):
+            bal_res = self.workweek.get_timeoff_balance(user_id)
+            bal = bal_res.get("balances", {}) if bal_res.get("status") == "SUCCESS" else {}
+            vac_rem = bal.get("vacation_remaining", 18.0)
+            sick_rem = bal.get("sick_remaining", 10.0)
+            session_state["pending_intent"] = "LEAVE_SLOT_FILLING"
+            response_text = (
+                f"I would be glad to help you submit a leave request! You currently have **{vac_rem:.1f} days ({vac_rem * 8.0:.1f} hours)** of vacation and **{sick_rem:.1f} days** of outpatient sick leave available.\n\n"
+                "To ensure your request is routed and logged correctly, please let me know:\n"
+                "1. **Which leave type** would you like to take?\n"
+                "2. **What dates** (e.g., `2026-09-15 to 2026-09-18`)?\n"
+                "3. **Number of days or hours**?"
+            )
+            chips = ["🌴 Annual Vacation", "🤒 Outpatient Sick Leave", "🏥 Hospitalization Leave", "🤝 Carer's Leave"]
+
+        # R4. Slot-Filling Continuation: Hardware Type Selected
+        elif session_state.get("pending_intent") == "HARDWARE_SLOT_FILLING":
+            session_state.pop("pending_intent", None)
+            if "monitor" in p_lower:
+                user_profile = self.workweek.get_profile(user_id).get("profile", {})
+                addr = user_profile.get("home_address", "123 Marina Bay, Singapore 018956")
+                session_state["monitor_eligibility"] = "VERIFIED"
+                session_state["shipping_address"] = addr
+                response_text = (
+                    f"Under the Remote Work Policy (Section 2.1), you are eligible for one 27-inch external monitor. "
+                    f"Your verified home delivery address on file is **{addr}**.\n\n"
+                    "Would you like me to dispatch the order to this address?"
+                )
+                chips = ["✅ Yes, Ship to My Home Address", "✏️ Provide New Delivery Address"]
+            elif "laptop" in p_lower:
+                response_text = (
+                    "I can open a Service Desk hardware incident for your laptop immediately. "
+                    "What issue are you experiencing with the device?"
+                )
+                chips = ["🔋 Battery / Power Issue", "🖥️ Screen Damage", "⚙️ System Won't Boot", "🔄 Routine Hardware Refresh"]
+            else:
+                response_text = (
+                    "Thank you for the details. I've noted your request for peripherals/accessories and can route this to Service Desk. "
+                    "Would you like me to open a Priority-3 Moderate ticket for fulfillment?"
+                )
+                chips = ["✅ Yes, Open Support Ticket", "📋 View Open Tickets"]
+
+        # R5. Proactive Slot-Filling: Underspecified Hardware & Equipment Requests
+        elif (
+            any(h in p_lower for h in ["need hardware", "need equipment", "order hardware", "order equipment", "broken laptop", "laptop is broken", "laptop issue", "screen is broken", "monitor broken", "need a new laptop", "need a monitor"])
+            or (("hardware" in p_lower or "equipment" in p_lower) and any(act in p_lower for act in ["need", "order", "request", "replace", "broken", "setup"]))
+        ) and not any(k in p_lower for k in ["squeaky", "chair", "address is", "address:", "singapore 018956", "summarize"]):
+            session_state["pending_intent"] = "HARDWARE_SLOT_FILLING"
+            response_text = (
+                "I can coordinate hardware procurement or open an IT Service Desk incident for you immediately. "
+                "To assist you quickly, please let me know:\n\n"
+                "1. **Equipment Type:** Are you requesting a standard 27-inch home office monitor, a laptop replacement (MacBook Pro / ThinkPad), or peripherals (keyboard/mouse)?\n"
+                "2. **Delivery Location:** Should this be shipped to your verified home address or prepared for office desk pickup at the Singapore office?\n"
+                "3. **Issue Summary:** If this is a repair or replacement, what symptom are you experiencing?"
+            )
+            chips = ["🖥️ Order 27-inch Monitor", "💻 Laptop Support Ticket", "⌨️ Keyboard & Mouse", "🏠 Confirm Delivery Address"]
+
+        # R6. Proactive Slot-Filling: General Meal & Travel Expenses
+        elif any(e in p_lower for e in ["how do i expense", "can i expense", "what can i expense", "meal expense", "travel expense", "expense policy", "dinner expense"]) and not any(k in p_lower for k in ["gift card", "room salon", "l7", "director", "seniority", "30 day", "cap and window"]):
+            response_text = (
+                "Here are the core business meal and travel expense guidelines under Section 4.4 and Section 14.2:\n\n"
+                "* **Solo Travel Meals:** Capped at **US$50 per day** (inclusive of taxes and gratuities), supported by itemized receipts.\n"
+                "* **Team / Client Business Meals:** Reimbursable up to **US$120 per person**, and **the most senior employee present must pay and submit in Concur**.\n"
+                "* **Filing Deadline:** All expense reports must be submitted within **30 calendar days** from the transaction date.\n"
+                "* **Prohibited Expenses:** Cash gift cards, room salons, and adult entertainment are strictly non-reimbursable.\n\n"
+                "Which type of expense would you like to claim or clarify?"
+            )
+            chips = ["✈️ Solo Travel Meal ($50 cap)", "🍽️ Group Meal Seniority Rule", "🕒 30-Day Concur Window", "🚫 Prohibited Items Policy"]
+
+        # R7. General Policy Q&A (Grounding & Citations)
         else:
             rag_res = self.policy_rag.search_and_answer(prompt)
             response_text = rag_res.get("answer")
+            if "chips" in rag_res:
+                chips = rag_res.get("chips", [])
 
         # Step 7: Google Cloud Model Armor Output Screening
         is_resp_safe, sanitized_resp, out_meta = self.model_armor.sanitize_model_response(response_text)
@@ -596,5 +743,7 @@ class SupervisorAgent:
         }
         if card:
             result_payload["card"] = card
+        if chips:
+            result_payload["chips"] = chips
 
         return result_payload

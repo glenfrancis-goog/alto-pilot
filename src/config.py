@@ -11,8 +11,8 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Foundation Model Configuration (Gemini 3.7 Flash)
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
+# Foundation Model Configuration (Gemini 3.8)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8")
 THINKING_BUDGET_INSTANT = int(os.getenv("THINKING_BUDGET_INSTANT", "0"))
 THINKING_BUDGET_ORCHESTRATION = int(os.getenv("THINKING_BUDGET_ORCHESTRATION", "1024"))
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.1"))

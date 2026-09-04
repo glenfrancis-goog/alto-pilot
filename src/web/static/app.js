@@ -50,6 +50,11 @@ async function sendMessage(promptText, confirmedAction = null, userOverride = fa
 
     appendMessage("assistant", "🤖", formatMarkdown(data.response));
 
+    // Render Suggestion Chips if returned
+    if (data.chips && Array.isArray(data.chips) && data.chips.length > 0) {
+      renderChips(data.chips);
+    }
+
     // Render Action Cards if returned
     if (data.card) {
       renderCard(data.card);
@@ -58,6 +63,26 @@ async function sendMessage(promptText, confirmedAction = null, userOverride = fa
     loadingEl.remove();
     appendMessage("assistant", "⚠️", `Connection error: ${err.message}. Please check backend server status.`);
   }
+}
+
+function renderChips(chips) {
+  const container = document.getElementById("messagesContainer");
+  const chipsEl = document.createElement("div");
+  chipsEl.className = "suggestion-chips";
+  chips.forEach(chip => {
+    const btn = document.createElement("button");
+    btn.className = "suggestion-chip";
+    btn.textContent = chip;
+    btn.onclick = () => {
+      // Disable sibling chips once selected
+      chipsEl.querySelectorAll(".suggestion-chip").forEach(c => c.disabled = true);
+      btn.classList.add("selected");
+      sendMessage(chip);
+    };
+    chipsEl.appendChild(btn);
+  });
+  container.appendChild(chipsEl);
+  container.scrollTop = container.scrollHeight;
 }
 
 function appendMessage(role, avatar, contentHtml) {

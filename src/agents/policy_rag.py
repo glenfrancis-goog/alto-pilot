@@ -44,6 +44,95 @@ class PolicyRagAgent:
     def list_concepts(self) -> List[Dict[str, str]]:
         return [{"id": c["id"], "title": c["title"], "source": c["source"]} for c in self.concepts.values()]
 
+    def rank_concepts(self, query: str, top_k: int = 3) -> List[tuple[float, Dict[str, Any]]]:
+        """Ranks all indexed OKF concepts against query using multi-field scoring."""
+        import re
+        q_clean = query.lower()
+        stopwords = {
+            "what", "is", "the", "policy", "for", "and", "or", "how", "does",
+            "can", "are", "about", "tell", "explain", "with", "from", "company",
+            "altostrat", "singapore", "employee", "handbook", "there", "have",
+            "been", "would", "like", "know", "please", "help", "near", "office",
+            "rules", "rule", "under", "regarding", "concerning"
+        }
+        tokens = [w for w in re.findall(r"\b[a-z0-9_-]{3,}\b", q_clean) if w not in stopwords]
+        if not tokens:
+            return []
+
+        scored = []
+        for cid, c in self.concepts.items():
+            score = 0.0
+            t_lower = c.get("title", "").lower()
+            cnt_lower = c.get("content", "").lower()
+            src_lower = c.get("source", "").lower()
+
+            if len(q_clean) > 5 and q_clean in t_lower:
+                score += 50.0
+
+            for token in tokens:
+                if token in t_lower:
+                    score += 25.0
+                if re.search(r"#+\s+.*" + re.escape(token), cnt_lower):
+                    score += 15.0
+                if token in src_lower:
+                    score += 10.0
+                score += min(cnt_lower.count(token), 8) * 1.5
+
+            if score > 0:
+                scored.append((score, c))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return scored[:top_k]
+
+    def _generate_chips_for_concept(self, concept: Dict[str, Any]) -> List[str]:
+        """Generates contextual quick action pills based on concept content."""
+        t_low = (concept.get("title", "") + " " + concept.get("content", "")[:400]).lower()
+        if any(k in t_low for k in ["remote", "telework", "hybrid", "work from home"]):
+            return ["💻 Request Home Monitor", "📶 Internet Reimbursement Policy", "🔒 Public Settings & Security"]
+        if any(k in t_low for k in ["medical", "clinic", "health", "dental", "vision"]):
+            return ["🏥 Find Approved Panel Clinics", "📄 Non-Panel Claim Caps", "🏥 Hospitalization Leave (60 days)"]
+        if any(k in t_low for k in ["leave", "vacation", "holiday", "absence", "time off"]):
+            return ["🌴 Book Annual Vacation", "🤒 Outpatient Sick Leave", "📅 Check Leave Balances"]
+        if any(k in t_low for k in ["meal", "expense", "travel", "per diem", "lodging"]):
+            return ["✈️ Solo Travel Meal ($50/day)", "🍽️ Group Meal Seniority Rule", "🕒 30-Day Concur Window"]
+        if any(k in t_low for k in ["conduct", "bullying", "harassment", "retaliation", "smoking", "drug"]):
+            return ["🛡️ Report a Concern", "⚖️ Progressive Disciplinary Process", "📞 Contact People Operations"]
+        if any(k in t_low for k in ["relocation", "transfer"]):
+            return ["🇬🇧 London Tier-1 (£5,000)", "🇯🇵 Tokyo Tier-1 (¥800,000)", "🏠 30-Day Accommodation"]
+        if any(k in t_low for k in ["intern", "probation", "tenure"]):
+            return ["⏱️ Probation Period Rules", "📊 Performance Expectations", "📈 Tenure Accrual Tiers"]
+        return ["🌴 Check Leave Balances", "💻 Hardware & IT Support", "✈️ Travel & Expense Policy"]
+
+    def _synthesize_concept_answer(self, query: str, scored_concepts: List[tuple[float, Dict[str, Any]]]) -> Dict[str, Any]:
+        """Synthesizes a structured policy extract with proactive follow-up."""
+        import re
+        top_concept = scored_concepts[0][1]
+        title = top_concept.get("title", "Altostrat Singapore Policy")
+        source = top_concept.get("source") or f"Section {title} (Altostrat Singapore Employee Policy Handbook)"
+        raw_content = top_concept.get("content", "")
+
+        # Clean and format markdown paragraphs
+        lines = [l.strip() for l in raw_content.split("\n") if l.strip() and not l.strip().startswith("#")]
+        body = "\n".join(lines)
+        # Format numbered lists into clean bullets
+        body = re.sub(r"(\d+\.\s+)", r"\n* **\1**", body).strip()
+        if len(body) > 900:
+            body = body[:900].rsplit(".", 1)[0] + "..."
+
+        answer = (
+            f"Under **{title}**:\n\n"
+            f"{body}\n\n"
+            f"Sources: {source}\n\n"
+            f"Would you like me to help you take action, check your eligibility, or clarify specific terms?"
+        )
+        chips = self._generate_chips_for_concept(top_concept)
+        return {
+            "answer": answer,
+            "sources": [source],
+            "grounded": True,
+            "chips": chips
+        }
+
     def search_and_answer(self, query: str) -> Dict[str, Any]:
         """Grounded retrieval and rule-based synthesis for policy queries."""
         q_lower = query.lower()
@@ -84,7 +173,8 @@ class PolicyRagAgent:
             return {
                 "answer": "Under Section 23.2 (Carer's Leave), eligible full-time employees are entitled to an exact cap of up to 5 paid days per calendar year to care for an immediate family member (spouse, parents, or children) during medical illness.\n\nSources: Section 23.2 (Leave Allowance & Increments)",
                 "sources": ["Section 23.2 (Leave Allowance & Increments)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🤝 Request Carer's Leave", "🌴 Check Vacation Balance", "📜 Section 23.2 Policy"]
             }
         if "unpaid" in q_lower and ("leave" in q_lower or "personal" in q_lower):
             return {
@@ -96,7 +186,8 @@ class PolicyRagAgent:
                     "Sources: Section 21.5 (Unpaid and Personal Leaves)"
                 ),
                 "sources": ["Section 21.5 (Unpaid and Personal Leaves)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🌴 Check Vacation Balance", "📄 10-Day VP Approval Form", "📈 Check Performance Rating"]
             }
 
         # Shared Parental Leave in Singapore (Section 23.1)
@@ -110,7 +201,8 @@ class PolicyRagAgent:
                     "Sources: Section 23.1 (Parental & Maternity Leaves), Singapore Child Development Co-Savings Act"
                 ),
                 "sources": ["Section 23.1 (Parental & Maternity Leaves)", "Singapore Child Development Co-Savings Act"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🍼 Paternity Leave (2 weeks)", "👶 Shared Parental Leave (4 weeks)", "📝 Mother's Consent Form"]
             }
 
         # Relocation Allowance & Regional Caps (Section 15.2 & 21.1)
@@ -127,7 +219,8 @@ class PolicyRagAgent:
                     "Sources: Section 15.2 (International Relocation), Section 21.1 (Regional Tier Packages)"
                 ),
                 "sources": ["Section 15.2 (International Relocation)", "Section 21.1 (Regional Tier Packages)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🇬🇧 London Tier-1 (£5,000)", "🇯🇵 Tokyo Tier-1 (¥800,000)", "🇦🇺 Sydney Tier-1 (A$9,000)", "🇺🇸 New York Tier-1 ($6,500)"]
             }
 
         # 2. Gotcha Traps & Specific Policy Rules
@@ -147,7 +240,8 @@ class PolicyRagAgent:
                     "Sources: Section 4.3 (Lodging & Transportation Caps), Section 14.2 (General Prohibitions)"
                 ),
                 "sources": ["Section 4.3 (Lodging & Transportation Caps)", "Section 14.2 (General Prohibitions)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["✈️ Eligible Non-Cash Host Gifts", "🏨 Hotel Booking Cap", "📋 Concur Receipt Policy"]
             }
 
         # Gotcha: Room salon / adult entertainment
@@ -161,7 +255,8 @@ class PolicyRagAgent:
                     "Sources: Section 14.2 (General Prohibitions), Section 4.4 (Business Meals & Entertainment)"
                 ),
                 "sources": ["Section 14.2 (General Prohibitions)", "Section 4.4 (Business Meals & Entertainment)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🍽️ Eligible Business Meals", "📋 Non-Reimbursable Policy", "⚖️ Standards of Conduct"]
             }
 
         # Gotcha: Pet bereavement
@@ -175,7 +270,8 @@ class PolicyRagAgent:
                     "Sources: Section 3.1 (Bereavement Leave), Section 22.1 (Scope and Eligibility)"
                 ),
                 "sources": ["Section 3.1 (Bereavement Leave)", "Section 22.1 (Scope and Eligibility)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🌴 Request Vacation Days", "📄 Bereavement Family Eligibility", "🤝 Unpaid Personal Leave"]
             }
 
         # Gotcha: Group meal seniority hierarchy
@@ -188,7 +284,8 @@ class PolicyRagAgent:
                     "Sources: Section 4.4 (Business Meals & Entertainment)"
                 ),
                 "sources": ["Section 4.4 (Business Meals & Entertainment)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["✈️ Solo Travel Meal ($50 cap)", "👥 Group Business Meal ($120 cap)", "🕒 30-Day Concur Window"]
             }
 
         # Hospitalization Leave & Notice (ho_hospitalization_and_notice / UC-1.1 / FR-5.2)
@@ -203,7 +300,8 @@ class PolicyRagAgent:
                     "Sources: Section 1.1 (Outpatient Sick Time & Hospitalization Leave), Singapore Employment Act (Part IV)"
                 ),
                 "sources": ["Section 1.1 (Outpatient Sick Time & Hospitalization Leave)", "Singapore Employment Act (Part IV)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🏥 Hospitalization Notice (48h)", "📄 Inpatient vs Outpatient", "📞 Contact People Operations"]
             }
 
         # Seniority Tenure Vacation Accrual & Year-End Carryover (ho_vacation_senior_carryover / UC-1.2 / FR-3.2)
@@ -217,7 +315,8 @@ class PolicyRagAgent:
                     "Sources: Section 1.2 (Vacation Policy), Section 20.2 (Accrual & Carryover Scale)"
                 ),
                 "sources": ["Section 1.2 (Vacation Policy)", "Section 20.2 (Accrual & Carryover Scale)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🌴 Book Vacation Days", "📅 Year-End Carryover (5 days)", "📈 Tenure Accrual Scale"]
             }
 
         # Travel Meal Expense Cap & 30-Day Submission Window (ho_meal_cap_and_window / UC-1.1 / FR-2.3)
@@ -231,7 +330,8 @@ class PolicyRagAgent:
                     "Sources: Section 4.4 (Business Meals & Entertainment), Section 14.2 (General Expense Rules)"
                 ),
                 "sources": ["Section 4.4 (Business Meals & Entertainment)", "Section 14.2 (General Expense Rules)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["✈️ Solo Travel Meal ($50 cap)", "🍽️ Group Meal Seniority Rule", "🕒 30-Day Concur Window"]
             }
 
         # Outpatient Sick Leave & MC
@@ -247,7 +347,8 @@ class PolicyRagAgent:
                     "Sources: Section 1.1 (Outpatient Sick Time & Hospitalization Leave (Singapore)), Section 19.2 (Outpatient Sick Leave)"
                 ),
                 "sources": ["Section 1.1 (Outpatient Sick Time)", "Section 19.2 (Outpatient Sick Leave)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🤒 Check Sick Leave Balance", "🏥 Hospitalization Leave (60 days)", "📄 Medical Certificate Rules"]
             }
 
         # Vacation & Carryover
@@ -263,16 +364,28 @@ class PolicyRagAgent:
                     "Sources: Section 1.2 (Vacation Policy), Section 20.2 (Accrual & Carryover)"
                 ),
                 "sources": ["Section 1.2 (Vacation Policy)", "Section 20.2 (Accrual & Carryover)"],
-                "grounded": True
+                "grounded": True,
+                "chips": ["🌴 Book Vacation Request", "📅 Year-End Carryover (5 days)", "📊 Check Leave Balances"]
             }
 
-        # Default handbook search
+        # Dynamic OKF Concept Ranking & Policy Synthesis
+        scored = self.rank_concepts(query, top_k=3)
+        if scored and scored[0][0] >= 5.0:
+            return self._synthesize_concept_answer(query, scored)
+
+        # Proactive Clarification when no specific concept matches
         return {
             "answer": (
-                "According to the Altostrat Singapore Employee Policy Handbook, all employees are entitled to standard statutory and company benefits. "
-                "For specific policy terms, please consult People Operations or refer to the internal policies portal.\n\n"
-                "Sources: Section 1.1 (General Benefits Overview)"
+                f"I couldn't find an exact policy section matching **\"{query}\"** in the handbook. "
+                "Altostrat Singapore policies cover leave entitlements, remote work guidelines, business expense claims, healthcare benefits, and workplace standards.\n\n"
+                "Which area would you like to explore or take action on?"
             ),
             "sources": ["Section 1.1 (General Benefits Overview)"],
-            "grounded": True
+            "grounded": True,
+            "chips": [
+                "🌴 Leave & Vacation Policies",
+                "🏠 Remote Work & Equipment",
+                "✈️ Travel & Meal Expenses",
+                "🏥 Health & Medical Benefits"
+            ]
         }

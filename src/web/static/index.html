@@ -25,16 +25,18 @@
       </div>
       <div class="quick-links">
         <h3>Sample Prompts</h3>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I need to take time off')">💬 Apply for Leave (Slot-Filling)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('I need hardware')">💻 Equipment Request (Slot-Filling)</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('Can I work from home on Fridays?')">🏠 Remote Work & WFH Policy</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('How do I claim non-panel clinic expenses?')">🏥 Insurance & Clinic Claims</button>
+        <button class="prompt-chip" onclick="sendQuickPrompt('What is the dinner expense limit on business trips?')">🍽️ Meal Expense Caps</button>
         <button class="prompt-chip" onclick="sendQuickPrompt('What is the sick leave and MC notice policy?')">📋 Sick Leave & MC Policy</button>
         <button class="prompt-chip" onclick="sendQuickPrompt('I want to buy a $45 gift card for my cousin who hosted me. Is that allowed?')">⚠️ $45 Host Gift Card (Gotcha)</button>
-        <button class="prompt-chip" onclick="sendQuickPrompt('Submit a vacation leave request for Sep 3 to Sep 4 (2 days)')">🏖️ Submit Vacation (Pre-flight)</button>
-        <button class="prompt-chip" onclick="sendQuickPrompt('I am eligible for a home office monitor. Can you verify my remote status and order one?')">💻 Order 27\" Monitor (SAGA UC-2.1)</button>
-        <button class="prompt-chip" onclick="sendQuickPrompt('I need to take short-term medical leave next week. Set it up.')">🏥 Medical Leave (SAGA UC-2.2)</button>
         <button class="prompt-chip" onclick="sendQuickPrompt('I am transferring to London office next month. Sort my relocation.')">✈️ London Transfer (SAGA UC-2.3)</button>
         <button class="prompt-chip" onclick="sendQuickPrompt('Withdraw my consent and purge my personal data.')">🛡️ GDPR RTBF Purge (UC-PRIVACY-01)</button>
       </div>
       <div class="sidebar-footer">
-        <div class="badge">Model: Gemini 3.7 Flash</div>
+        <div class="badge">Model: Gemini 3.8</div>
         <div class="badge">SLA: Eventarc &lt; 3m P95</div>
       </div>
     </aside>
