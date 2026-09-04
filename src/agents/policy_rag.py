@@ -53,11 +53,27 @@ class PolicyRagAgent:
             "can", "are", "about", "tell", "explain", "with", "from", "company",
             "altostrat", "singapore", "employee", "handbook", "there", "have",
             "been", "would", "like", "know", "please", "help", "near", "office",
-            "rules", "rule", "under", "regarding", "concerning"
+            "rules", "rule", "under", "regarding", "concerning", "business"
         }
-        tokens = [w for w in re.findall(r"\b[a-z0-9_-]{3,}\b", q_clean) if w not in stopwords]
-        if not tokens:
+        synonyms = {
+            "dinner": ["meal", "dining"],
+            "lunch": ["meal", "dining"],
+            "breakfast": ["meal", "dining"],
+            "meals": ["meal"],
+            "hardware": ["equipment", "monitor", "laptop"],
+            "relocation": ["transfer"],
+            "assets": ["hardware", "equipment", "devices"],
+            "wfh": ["remote", "telework"],
+            "telecommute": ["remote"],
+        }
+        raw_tokens = [w for w in re.findall(r"\b[a-z0-9_-]{3,}\b", q_clean) if w not in stopwords]
+        if not raw_tokens:
             return []
+
+        tokens = list(raw_tokens)
+        for t in raw_tokens:
+            if t in synonyms:
+                tokens.extend(synonyms[t])
 
         scored = []
         for cid, c in self.concepts.items():
@@ -70,7 +86,8 @@ class PolicyRagAgent:
                 score += 50.0
 
             for token in tokens:
-                if token in t_lower:
+                t_stem = token.rstrip("s")
+                if token in t_lower or (len(t_stem) > 3 and t_stem in t_lower):
                     score += 25.0
                 if re.search(r"#+\s+.*" + re.escape(token), cnt_lower):
                     score += 15.0

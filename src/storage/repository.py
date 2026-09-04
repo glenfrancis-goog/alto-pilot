@@ -77,15 +77,13 @@ class SessionRepository:
 
     @staticmethod
     def update_session_state(session_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
-        current = SessionRepository.get_session_state(session_id)
-        current.update(updates)
         now_iso = datetime.now(timezone.utc).isoformat()
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE sessions SET metadata = ?, updated_at = ? WHERE session_id = ?", (json.dumps(current), now_iso, session_id))
+        cursor.execute("UPDATE sessions SET metadata = ?, updated_at = ? WHERE session_id = ?", (json.dumps(updates), now_iso, session_id))
         conn.commit()
         conn.close()
-        return current
+        return updates
 
     @staticmethod
     def record_saga(saga_id: str, session_id: str, user_id: str, flow_type: str, current_step: str, status: str, payload: Dict[str, Any], error_details: Optional[Dict[str, Any]] = None):

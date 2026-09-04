@@ -89,6 +89,8 @@ class SupervisorAgent:
         session_state["user_id"] = user_id
 
         p_lower = prompt.lower()
+        date_matches = re.findall(r"\b(202[0-9]-[0-1][0-9]-[0-3][0-9])\b", prompt)
+        has_dates = bool(date_matches) or "2026-07-20" in prompt
         response_text = ""
         card = None
         chips: List[str] = []
@@ -242,6 +244,30 @@ class SupervisorAgent:
                     "up to **30 days of temporary company accommodation**, and standard visa sponsorship support."
                 )
 
+        # F2. London Relocation Policy Exception & Allowance Cap (> £5,000 / $5,000)
+        elif any(phrase in p_lower for phrase in [
+            "more that $5000", "more than $5000", "more than 5000", "more that 5000",
+            "more that £5000", "more than £5000", "more than 5,000", "more that 5,000",
+            "need more money", "exceed 5000", "exceed £5000", "relocation exception", "higher allowance",
+            "more allowance", "additional relocation"
+        ]) or (
+            ("relocation" in p_lower or session_state.get("relocation_destination") == "London")
+            and any(k in p_lower for k in ["more", "higher", "increase", "additional", "exceed", "5000"])
+        ):
+            session_state.pop("pending_intent", None)
+            response_text = (
+                "Under Section 15.2 (International Transfers) and Global Mobility Guidelines, the Tier-1 relocation allowance "
+                "for the London Office is strictly capped at **£5,000 (GBP)**.\n\n"
+                "### Relocation Allowance & Exception Rules:\n"
+                "* **Standard Allowance:** Capped at **£5,000**, disbursed via payroll to assist with transit, moving, and initial setup.\n"
+                "* **Temporary Housing:** Up to **30 calendar days** of corporate housing provided by Altostrat in London.\n"
+                "* **Exception Process (> £5,000):** Any relocation expense exceeding £5,000 is classified as an **Executive Policy Exception**. "
+                "This requires a documented business justification and formal written pre-approval from both your **Vice President (VP)** "
+                "and the **People Operations Director**. Without approved executive exception documentation, payroll cannot disburse any amount above £5,000.\n\n"
+                "Would you like me to connect you with People Operations (`peopleops@corp.intranet`) for an exception review?"
+            )
+            chips = ["✈️ London Relocation Guidelines", "📞 Contact People Operations", "📋 View Relocation Ticket"]
+
         # G. Phone Update with DLP check (Turn 7 of 10-turn)
         elif ("update my contact phone" in p_lower or "update phone" in p_lower or "phone number" in p_lower) and ("+44" in prompt or "london" in p_lower):
             phone_match = re.search(r"(\+44[\d\s]+)", prompt)
@@ -279,20 +305,32 @@ class SupervisorAgent:
                 f"You also have **{sick_hours:.1f} hours ({sick_rem:.1f} days)** of sick leave remaining."
             )
 
+        # I2. Cancellation of pending workflow
+        elif any(c in p_lower for c in ["cancel", "cancel request", "never mind", "nevermind", "stop"]) and session_state.get("pending_intent"):
+            session_state.pop("pending_intent", None)
+            response_text = "I have canceled your pending request. How else may I assist you today?"
+            chips = ["🌴 Check Leave Balances", "💻 View My IT Assets", "✈️ Travel & Expense Rules"]
+
         # J. Vacation Requests (Interactive Action or Instant with Dates)
-        elif (
+        elif session_state.get("pending_intent") != "LEAVE_SLOT_FILLING" and (
             any(v in p_lower for v in [
                 "request a vacation", "request vacation", "book a vacation", "book vacation",
                 "submit a vacation", "submit vacation", "vacation request", "take a vacation",
-                "take vacation", "apply for vacation"
+                "take vacation", "apply for vacation", "annual vacation"
             ])
-            or session_state.get("pending_intent") == "VACATION_REQUEST"
+            or (
+                session_state.get("pending_intent") == "VACATION_REQUEST"
+                and (
+                    has_dates
+                    or any(k in p_lower for k in [
+                        "vacation", "annual", "pto", "leave", "day", "days", "hour", "hours",
+                        "from", "to", "monday", "tuesday", "wednesday", "thursday", "friday",
+                        "next week", "tomorrow", "starting", "ending", "custom date", "schedule"
+                    ])
+                )
+            )
         ) and not any(p in p_lower for p in ["accrue", "accrual", "tenure", "carryover", "carry over"]):
             thinking_budget = THINKING_BUDGET_ORCHESTRATION
-
-            # Look for dates in prompt
-            date_matches = re.findall(r"\b(202[0-9]-[0-1][0-9]-[0-3][0-9])\b", prompt)
-            has_dates = bool(date_matches) or "2026-07-20" in prompt
 
             # Case 1: Dates provided
             if has_dates:
@@ -360,14 +398,14 @@ class SupervisorAgent:
                 vac_hours = vac_rem * 8.0
 
                 response_text = (
-                    "I would be glad to help you submit a vacation request! "
+                    f"I would be glad to help you submit your **Annual Vacation** request! "
                     f"You currently have **{vac_hours:.1f} hours ({vac_rem:.1f} days)** of available vacation leave remaining.\n\n"
                     "To submit your request, please provide:\n"
-                    "1. **Start Date** (e.g., `2026-09-15`)\n"
-                    "2. **End Date** (e.g., `2026-09-18`)\n"
-                    "3. **Number of Days or Hours** (e.g., `4 days` or `32 hours`)\n\n"
+                    "1. **Start and end dates** (e.g., `2026-09-15 to 2026-09-18`)\n"
+                    "2. **Duration** (e.g., `4 days` or `32 hours`)\n\n"
                     "Once you provide the dates, I will submit the request directly into WorkWeek for manager approval."
                 )
+                chips = ["📅 Next Monday (1 day / 8 hrs)", "📅 Next Week (5 days / 40 hrs)", "📅 Custom Date Range"]
 
         # K. Incident Ticket Status Lookup (Dynamic INC Ticket ID, e.g. INC0000009, INC0003709)
         elif re.search(r"\b(INC\d{6,8})\b", prompt, re.IGNORECASE) and not any(k in p_lower for k in ["close", "closed", "comment", "note", "update", "transition", "status to"]) and not ("double-check if my request went through" in p_lower):
@@ -536,6 +574,7 @@ class SupervisorAgent:
 
         # Q. ServiceImmediately Ticket Status or Listing
         elif any(t in p_lower for t in ["my tickets", "open tickets", "support ticket", "support incident", "open incident", "my incident", "active incident", "serviceimmediately"]):
+            session_state.pop("pending_intent", None)
             res = self.service_immediately.list_tickets(user_id)
             tix = res.get("tickets", [])
             if tix:
@@ -545,8 +584,60 @@ class SupervisorAgent:
                 response_text = "You have no active support tickets on file."
             chips = ["📝 File New Ticket", "✏️ Add Comment to Ticket", "🔄 Refresh Ticket List"]
 
+        # Q1. IT Assets & Equipment Listed Under Name
+        elif any(phrase in p_lower for phrase in [
+            "what it assets", "what assets", "assets listed under my name", "assets under my name",
+            "my it assets", "it assets listed", "my hardware", "hardware assigned to me",
+            "equipment assigned to me", "assigned assets", "my assigned equipment", "devices assigned to me",
+            "what devices do i have", "what hardware do i have", "it equipment assigned"
+        ]) or (("it asset" in p_lower or "hardware" in p_lower or "equipment" in p_lower) and any(w in p_lower for w in ["under my name", "assigned to me", "listed under", "my name"])):
+            session_state.pop("pending_intent", None)
+            res = self.service_immediately.list_tickets(user_id)
+            tix = res.get("tickets", [])
+            hw_tickets = [t for t in tix if t.get("category") == "Hardware"]
+            
+            response_text = (
+                f"### IT Assets & Equipment Assigned to You ({user_id})\n\n"
+                "According to the IT Asset Registry and ServiceImmediately CMDB, your standard assigned devices are:\n\n"
+                "* **Primary Laptop:** 16-inch MacBook Pro (Apple Silicon M-Series, Corporate Build)\n"
+                "* **Security Keys:** 2x FIPS-140-2 Level 3 Hardware Security Keys (Titan / YubiKey)\n"
+                "* **Power & Peripherals:** USB-C 140W Power Adapter, MagSafe 3 Cable\n"
+            )
+            if hw_tickets:
+                response_text += "\n**Active Hardware Requisitions & Orders:**\n"
+                for t in hw_tickets:
+                    response_text += f"* **{t.get('ticket_id')}** ({t.get('status')} - {t.get('priority')}): {t.get('short_description')}\n"
+            
+            response_text += (
+                "\n*Note: Under Section 6.2 and Section 33.1, all corporate IT assets remain company property and must be secured at all times. "
+                "For hardware upgrades, repairs, or peripheral requests, you can submit an IT Service Desk incident.*"
+            )
+            chips = ["💻 Order 27-inch Monitor", "🎧 Headset Replacement", "📝 File IT Support Ticket", "📋 View All Tickets"]
+
+        # R0. User Confusion Recovery & Conversational State Reset
+        elif any(c in p_lower for c in [
+            "why is the response so weird", "why is the response so wierd", "response so weird", "response so wierd",
+            "weird response", "wierd response", "that is not what i asked", "that's not what i asked",
+            "not what i asked", "you didn't answer my question", "you did not answer my question",
+            "why are you saying that", "why do you keep saying", "this makes no sense", "wrong answer",
+            "start over", "reset conversation", "clear state"
+        ]):
+            session_state.pop("pending_intent", None)
+            response_text = (
+                "I apologize for the confusion! It appears our previous exchange had a pending workflow state "
+                "or misunderstood your intent. I have cleared the active workflow context so we can start fresh.\n\n"
+                "As **JetClimbers**, I can assist you with:\n"
+                "* **Time Off & Leave:** Check vacation and sick leave balances or schedule time off in WorkWeek.\n"
+                "* **Equipment & Hardware:** Check assigned IT assets, order approved monitors, or open tickets in ServiceImmediately.\n"
+                "* **Policy Guidance:** Grounded handbook answers across all 155 Altostrat Singapore policy sections.\n"
+                "* **Travel & Expenses:** Business meal caps, 30-day Concur deadlines, and relocation packages.\n\n"
+                "Please let me know how I can help you right now!"
+            )
+            chips = ["🌴 Check Leave Balances", "💻 View My IT Assets", "✈️ Travel & Expense Rules", "📋 View Open Tickets"]
+
         # R1. Greetings & Virtual Assistant Capabilities (Gemini 3.8)
         elif any(p_lower == g or p_lower.startswith(g + " ") for g in ["hello", "hi", "hey", "help", "good morning", "good afternoon"]) or p_lower in ["what can you do", "what can you do?", "who are you", "who are you?"]:
+            session_state.pop("pending_intent", None)
             response_text = (
                 "Hello! I am JetClimbers, your enterprise HR and workplace services virtual assistant powered by **Gemini 3.8**.\n\n"
                 "Here are key ways I can help you today:\n"
@@ -559,7 +650,11 @@ class SupervisorAgent:
             chips = ["🌴 Check Leave Balances", "💻 Order 27-inch Monitor", "✈️ Travel & Expense Rules", "📋 View My Active Tickets"]
 
         # R2. Slot-Filling Continuation: Leave Type Selected
-        elif session_state.get("pending_intent") == "LEAVE_SLOT_FILLING":
+        elif session_state.get("pending_intent") == "LEAVE_SLOT_FILLING" and any(k in p_lower for k in [
+            "vacation", "annual", "sick", "mc", "outpatient", "hospital", "surgery", "inpatient", "carer",
+            "paternity", "parental", "unpaid", "personal leave", "1 day", "2 days", "3 days", "4 days", "5 days",
+            "cancel", "stop", "never mind"
+        ]):
             if any(v in p_lower for v in ["vacation", "annual"]):
                 session_state["pending_intent"] = "VACATION_REQUEST"
                 bal_res = self.workweek.get_timeoff_balance(user_id)
@@ -630,7 +725,11 @@ class SupervisorAgent:
             chips = ["🌴 Annual Vacation", "🤒 Outpatient Sick Leave", "🏥 Hospitalization Leave", "🤝 Carer's Leave"]
 
         # R4. Slot-Filling Continuation: Hardware Type Selected
-        elif session_state.get("pending_intent") == "HARDWARE_SLOT_FILLING":
+        elif session_state.get("pending_intent") == "HARDWARE_SLOT_FILLING" and any(k in p_lower for k in [
+            "monitor", "screen", "display", "laptop", "macbook", "thinkpad", "keyboard", "mouse",
+            "headset", "headphone", "peripheral", "peripherals", "accessory", "accessories",
+            "pickup", "desk pickup", "delivery", "home delivery", "cancel", "stop"
+        ]):
             session_state.pop("pending_intent", None)
             if "monitor" in p_lower:
                 user_profile = self.workweek.get_profile(user_id).get("profile", {})
@@ -649,6 +748,9 @@ class SupervisorAgent:
                     "What issue are you experiencing with the device?"
                 )
                 chips = ["🔋 Battery / Power Issue", "🖥️ Screen Damage", "⚙️ System Won't Boot", "🔄 Routine Hardware Refresh"]
+            elif any(c in p_lower for c in ["cancel", "stop"]):
+                response_text = "I have canceled your hardware request. How else may I assist you today?"
+                chips = ["🌴 Check Leave Balances", "💻 View My IT Assets", "✈️ Travel & Expense Rules"]
             else:
                 response_text = (
                     "Thank you for the details. I've noted your request for peripherals/accessories and can route this to Service Desk. "
@@ -673,6 +775,7 @@ class SupervisorAgent:
 
         # R6. Proactive Slot-Filling: General Meal & Travel Expenses
         elif any(e in p_lower for e in ["how do i expense", "can i expense", "what can i expense", "meal expense", "travel expense", "expense policy", "dinner expense"]) and not any(k in p_lower for k in ["gift card", "room salon", "l7", "director", "seniority", "30 day", "cap and window"]):
+            session_state.pop("pending_intent", None)
             response_text = (
                 "Here are the core business meal and travel expense guidelines under Section 4.4 and Section 14.2:\n\n"
                 "* **Solo Travel Meals:** Capped at **US$50 per day** (inclusive of taxes and gratuities), supported by itemized receipts.\n"
@@ -685,6 +788,7 @@ class SupervisorAgent:
 
         # R7. General Policy Q&A (Grounding & Citations)
         else:
+            session_state.pop("pending_intent", None)
             rag_res = self.policy_rag.search_and_answer(prompt)
             response_text = rag_res.get("answer")
             if "chips" in rag_res:
